@@ -2,8 +2,98 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useEstimateGas, useAccount } from 'wagmi';
+import { pundixContractConfig } from '../pundix-lp-farm-contract'
+import { Address, erc20Abi, parseGwei } from 'viem';
+import { LP_FARM_CONTRACT, LP_FARM_TOKEN_A } from '../constants';
+import { useTokenApproval } from '../hooks/tokenSpending';
 
 const Home: NextPage = () => {
+  const { address: userWalletAddress, isConnected } = useAccount()
+  
+  const { writeContract, data: hash, isPending } = useWriteContract();
+  const { isSuccess, isLoading: isConfirming } = useWaitForTransactionReceipt({ hash })
+
+  const { writeContract: approveWrite, data: approveTxHash } = useWriteContract()
+
+  const { isSuccess: isApproved } = useWaitForTransactionReceipt({
+    hash: approveTxHash,
+  })
+
+  const { data: poolAddress } = useReadContract({
+    ...pundixContractConfig,
+    functionName: 'poolTokenList',
+    args: [BigInt(1)],
+  })
+
+  const { data: userInfo } = useReadContract({
+    ...pundixContractConfig,
+    functionName: 'userInfo',
+    args: ["0xfc450e16016aF4e4197f5dB5Ca0d262fF8fD735a", "0xA7396814b9946f3fd1616410985aF0258412477c"],
+  })
+
+  const { data: tokenName } = useReadContract({
+    address: poolAddress,
+    abi: erc20Abi,
+    functionName: 'name',
+    query: { enabled: !!poolAddress },
+  })
+  const { data: tokenSymbol } = useReadContract({
+    address: poolAddress,
+    abi: erc20Abi,
+    functionName: 'symbol',
+    query: { enabled: !!poolAddress },
+  })
+
+  // const { data: estimatedGas, isLoading, error } = useEstimateGas({
+  //   ...pundixContractConfig,
+  //   parameters: {
+  //     functionName: 'deposit',
+  //     args: [tokenAddress, parseEther('1')],
+  //   }
+  //   account: userAddress, // required!
+  // })
+
+
+  // console.log("dsa", poolAddress, tokenName, tokenSymbol, userInfo)
+
+  const handleApproveToken = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+
+    approveWrite({
+      address: LP_FARM_TOKEN_A, // the ERC20 token contract
+      abi: erc20Abi,
+      functionName: 'approve',
+      args: ["0x439ec8159740a9B9a579F286963Ac1C050aF31C8", BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")], // allow proxy to spend 1 token
+    })
+  }
+  
+  const { approve, isApproving, needsApproval, allowance } = useTokenApproval({
+    tokenAddress: LP_FARM_TOKEN_A,
+    spenderContractAddress: LP_FARM_CONTRACT,
+    userAddress: userWalletAddress as unknown as Address,
+  })
+
+  const handleDepositBtn = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+
+    // approveWrite({
+    //   address: "0xA7396814b9946f3fd1616410985aF0258412477c", // the ERC20 token contract
+    //   abi: erc20Abi,
+    //   functionName: 'approve',
+    //   args: ["0x439ec8159740a9B9a579F286963Ac1C050aF31C8", BigInt(100)], // allow proxy to spend 1 token
+    // })
+
+
+    writeContract({
+      ...pundixContractConfig,
+      functionName: 'deposit',
+      args: ["0xfc450e16016aF4e4197f5dB5Ca0d262fF8fD735a", BigInt(1000000)],
+      gas: parseGwei('0.001')
+    })
+  }
+
+
   return (
     <div className={styles.container}>
       <Head>
@@ -17,6 +107,16 @@ const Home: NextPage = () => {
 
       <main className={styles.main}>
         <ConnectButton />
+
+        <div>Purse Token Addy: {poolAddress?.toString()}</div>
+
+        <button className="rounded-xl bg-orange-400 hover:bg-orange-500 p-3 text-white" onClick={handleApproveToken}>Approve</button>
+
+        <button className="rounded-xl bg-orange-400 hover:bg-orange-500 p-3 text-white" onClick={handleDepositBtn}>Deposit</button>
+
+        <div>{isPending ? "Transaction Pending" : "Not in Pending stage"}</div>
+        <div>{isConfirming ? "Transaction Is Confirming" : "Not in Confirming stage/Not Confirmed"}</div>
+        <div>{isSuccess ? "Transaction Success" : "Not in Succcess stage/Not successful"}</div>
 
         <h1 className={styles.title}>
           Welcome to <a href="https://www.rainbowkit.com">RainbowKit</a> +{' '}

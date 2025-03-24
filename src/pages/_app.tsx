@@ -7,6 +7,7 @@ import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 
 import { config } from '../wagmi';
+import { bsc } from 'viem/chains';
 
 const client = new QueryClient();
 
@@ -14,7 +15,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={client}>
-        <RainbowKitProvider>
+        <RainbowKitProvider initialChain={bsc}>
           <Component {...pageProps} />
         </RainbowKitProvider>
       </QueryClientProvider>
