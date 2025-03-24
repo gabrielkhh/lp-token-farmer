@@ -8,6 +8,7 @@ import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 
 import { config } from '../wagmi';
 import { bsc } from 'viem/chains';
+import SharedLayout from '../components/SharedLayout';
 
 const client = new QueryClient();
 
@@ -16,7 +17,9 @@ function MyApp({ Component, pageProps }: AppProps) {
     <WagmiProvider config={config}>
       <QueryClientProvider client={client}>
         <RainbowKitProvider initialChain={bsc}>
-          <Component {...pageProps} />
+          <SharedLayout>
+            <Component {...pageProps} />
+          </SharedLayout>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

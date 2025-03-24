@@ -1,26 +1,7 @@
-
 import { Address, erc20Abi } from 'viem'
 import { useReadContract, useWriteContract } from 'wagmi'
 import { MAX_UINT256 } from '../constants'
 import { useMemo } from 'react'
-
-// export const useGetTokenSpendingAllowance = (tokenAddress: Address, userAddress: Address, spenderContractAddress: Address) => {
-//     return useReadContract({
-//         address: tokenAddress,
-//         abi: erc20Abi,
-//         functionName: 'allowance',
-//         args: [userAddress, spenderContractAddress],
-//     })
-// }
-
-// export const useRequestTokenSpendingAllowance = (tokenAddress: Address, spenderContractAddress: Address, amount: BigInt) => {
-//     return useWriteContract({
-//         address: tokenAddress,
-//         abi: erc20Abi,
-//         functionName: 'approve',
-//         args: [spenderContractAddress, amount],
-//     })
-// }
 
 export const useTokenApproval = ({
     tokenAddress,
@@ -30,7 +11,7 @@ export const useTokenApproval = ({
 }: {
     tokenAddress: Address
     spenderContractAddress: Address
-    userAddress: Address | undefined
+    userAddress: Address
     amount?: bigint
 }) => {
     const { data: allowance, isLoading: loadingAllowance } = useReadContract({
