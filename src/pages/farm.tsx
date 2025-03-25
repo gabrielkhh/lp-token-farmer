@@ -1,6 +1,19 @@
 import React from 'react'
+import { useGetPoolInfo, useGetPoolToken, useGetUserPositions } from '../hooks/pool';
+import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { pundixFarmContractConfig } from '../constants';
+import { Address, parseGwei } from 'viem';
+import LPCard from '../components/LPCard';
 
 const Farm = () => {
+    const { isConnected, address: userWalletAddress } = useAccount();
+    const { data: poolInfo } = useGetPoolInfo();
+    const tokenA = useGetPoolToken(BigInt(0));
+    const tokenB = useGetPoolToken(BigInt(1));
+
+    const { data: userInfo } = useGetUserPositions(userWalletAddress);
+
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-center mb-8">
@@ -54,10 +67,15 @@ const Farm = () => {
             </div>
 
             {/* User Positions */}
-            <div className="bg-gray-100 rounded-xl w-full p-3">
-                <span></span>
-            </div>
-        </div>
+            {!isConnected ? (
+                <ConnectButton />
+            ) : (
+                <>
+                    <LPCard tokenAddress={tokenA.address as Address} />
+                    <LPCard tokenAddress={tokenB.address as Address} />
+                </>
+            )}
+        </div >
     )
 }
 
