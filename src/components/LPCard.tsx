@@ -5,12 +5,14 @@ import { useAccount, useWriteContract } from 'wagmi';
 import { useGetPancakeTokenA, useGetPancakeTokenB, useGetPancakeTokenName } from '../hooks/pancakeLpToken';
 import { useGetPoolToken } from '../hooks/pool';
 import { useGetToken, useGetTokenInfoWithBalance } from '../hooks/token';
+import DepositModal from './DepositModal';
 
 const LPCard = ({
     tokenAddress
 }: {
     tokenAddress: Address
 }) => {
+    const [isDepositModalOpen, setIsDepositModalOpen] = React.useState(false)
     const { address: userWalletAddress } = useAccount();
     const { writeContract, data: hash, isPending } = useWriteContract();
 
@@ -24,6 +26,7 @@ const LPCard = ({
     
     const handleDepositBtn = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
+        setIsDepositModalOpen(true)
 
         // approveWrite({
         //   address: "0xA7396814b9946f3fd1616410985aF0258412477c", // the ERC20 token contract
@@ -32,18 +35,19 @@ const LPCard = ({
         //   args: ["0x439ec8159740a9B9a579F286963Ac1C050aF31C8", BigInt(100)], // allow proxy to spend 1 token
         // })
 
-        writeContract({
-            ...pundixFarmContractConfig,
-            functionName: 'deposit',
-            args: [tokenAddress, BigInt(1000000)],
-            gas: parseGwei('0.0001')
-        })
+        // writeContract({
+        //     ...pundixFarmContractConfig,
+        //     functionName: 'deposit',
+        //     args: [tokenAddress, BigInt(1000000)],
+        //     gas: parseGwei('0.0001')
+        // })
     }
 
     console.log("LP-CARD", tokenAddress, lpTokenInfo, tokenAInfo, tokenBInfo)
     
     return (
         <div className="flex flex-col gap-2 bg-gray-100 rounded-xl w-full p-3">
+            <DepositModal isOpen={isDepositModalOpen} onClose={setIsDepositModalOpen} depositTokenAddress={tokenAddress} />
             <div className="flex flex-col gap-0">
                 <span className="font-semibold text-xl">{tokenAInfo.tokenInfo.symbol}-{tokenBInfo.tokenInfo.symbol} LP</span>
                 <span className="text-sm font-medium text-gray-500">Min 42.00/ Max 67.129 CAKE per WBNB</span>

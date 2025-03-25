@@ -1,5 +1,6 @@
 import { Address, erc20Abi } from "viem"
 import { useReadContract } from "wagmi"
+import { formatTokenAmount, formatTokenAmountAsString } from "../utils"
 
 
 export const useGetTokenName = (tokenAddress: Address | undefined) => {
@@ -40,7 +41,8 @@ export const useGetTokenBalance = (tokenAddress: Address | undefined, userAddres
 
     const { data: decimals } = useGetTokenDecimals(tokenAddress)
 
-    const formattedBalance = readResult.data !== undefined && decimals ? Number(readResult.data) / 10 ** Number(decimals) : undefined
+    // const formattedBalance = readResult.data !== undefined && decimals ? Number(readResult.data) / 10 ** Number(decimals) : undefined
+    const formattedBalance = formatTokenAmountAsString(readResult.data, decimals)
 
     return {
         rawBalance: readResult.data,
