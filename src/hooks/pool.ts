@@ -3,12 +3,24 @@ import { LP_FARM_CONTRACT, pundixFarmContractConfig } from "../constants"
 import { useGetTokenDecimals, useGetTokenName, useGetTokenSymbol } from "./token"
 import { Address } from "viem"
 
-export const useGetPoolInfo = () => {
-    return useReadContract({
+export const useGetPoolInfo = (lpTokenAddress: Address) => {
+    const { data: poolInfo } = useReadContract({
         ...pundixFarmContractConfig,
         functionName: 'poolInfo',
-        args: [LP_FARM_CONTRACT],
+        args: [lpTokenAddress],
     })
+
+    if (Array.isArray(poolInfo)) {
+        return {
+            pursePerBlock: poolInfo[1],
+            bonusMultiplier: poolInfo[2],
+            lastRewardBlock: poolInfo[3],
+            accPursePerShare: poolInfo[4],
+            startBlock: poolInfo[5]
+        }
+    } else {
+        return undefined
+    }
 }
 
 export const useGetPoolToken = (index: bigint) => {
@@ -30,11 +42,20 @@ export const useGetPoolToken = (index: bigint) => {
     }
 }
 
-export const useGetUserPositions = (userAddress: Address | undefined) => {
-    return useReadContract({
+export const useGetUserPositions = (lpTokenAddress: Address, userAddress: Address | undefined) => {
+    const { data: userInfo } = useReadContract({
         ...pundixFarmContractConfig,
         functionName: 'userInfo',
-        args: [LP_FARM_CONTRACT, userAddress],
+        args: [lpTokenAddress, userAddress],
         query: { enabled: !!userAddress },
     })
+
+    if (Array.isArray(userInfo)) {
+        return {
+            amount: userInfo[0],
+            rewardDebt: userInfo[1],
+        }
+    } else {
+        return undefined
+    }
 }

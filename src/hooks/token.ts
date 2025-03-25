@@ -1,6 +1,6 @@
 import { Address, erc20Abi } from "viem"
 import { useReadContract } from "wagmi"
-import { formatTokenAmount, formatTokenAmountAsString } from "../utils"
+import { formatTokenAmountAsString } from "../utils"
 
 
 export const useGetTokenName = (tokenAddress: Address | undefined) => {

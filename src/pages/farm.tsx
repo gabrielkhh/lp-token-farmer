@@ -8,11 +8,8 @@ import LPCard from '../components/LPCard';
 
 const Farm = () => {
     const { isConnected, address: userWalletAddress } = useAccount();
-    const { data: poolInfo } = useGetPoolInfo();
     const tokenA = useGetPoolToken(BigInt(0));
     const tokenB = useGetPoolToken(BigInt(1));
-
-    const { data: userInfo } = useGetUserPositions(userWalletAddress);
 
     return (
         <div className="flex flex-col gap-3">

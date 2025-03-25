@@ -4,7 +4,7 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useEstimateGas, useAccount } from 'wagmi';
 import { Address, erc20Abi, parseGwei } from 'viem';
-import { LP_FARM_CONTRACT, LP_FARM_TOKEN_A, pundixFarmContractConfig } from '../constants';
+import { LP_FARM_CONTRACT, pundixFarmContractConfig } from '../constants';
 import { useTokenApproval } from '../hooks/tokenSpending';
 import Link from 'next/link';
 
@@ -57,22 +57,22 @@ const Home: NextPage = () => {
 
   // console.log("dsa", poolAddress, tokenName, tokenSymbol, userInfo)
 
-  const handleApproveToken = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault()
+  // const handleApproveToken = (e: React.MouseEvent<HTMLButtonElement>) => {
+  //   e.preventDefault()
 
-    approveWrite({
-      address: LP_FARM_TOKEN_A, // the ERC20 token contract
-      abi: erc20Abi,
-      functionName: 'approve',
-      args: ["0x439ec8159740a9B9a579F286963Ac1C050aF31C8", BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")], // allow proxy to spend 1 token
-    })
-  }
+  //   approveWrite({
+  //     address: LP_FARM_TOKEN_A, // the ERC20 token contract
+  //     abi: erc20Abi,
+  //     functionName: 'approve',
+  //     args: ["0x439ec8159740a9B9a579F286963Ac1C050aF31C8", BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")], // allow proxy to spend 1 token
+  //   })
+  // }
 
-  const { approve, isApproving, needsApproval, allowance } = useTokenApproval({
-    tokenAddress: LP_FARM_TOKEN_A,
-    spenderContractAddress: LP_FARM_CONTRACT,
-    userAddress: userWalletAddress as unknown as Address,
-  })
+  // const { approve, isApproving, needsApproval, allowance } = useTokenApproval({
+  //   tokenAddress: LP_FARM_TOKEN_A,
+  //   spenderContractAddress: LP_FARM_CONTRACT,
+  //   userAddress: userWalletAddress as unknown as Address,
+  // })
 
   const handleDepositBtn = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()

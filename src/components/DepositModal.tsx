@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction, useCallback } from 'react'
-import { X } from 'tabler-icons-react'
+import { Loader2, X } from 'tabler-icons-react'
 import { Address } from 'viem'
 import { useGetTokenInfoWithBalance } from '../hooks/token'
 import { useAccount, useConfig, useWriteContract } from 'wagmi'
@@ -20,6 +20,7 @@ const DepositModal = ({
     const config = useConfig();
     const [lpTokenAmount, setLpTokenAmount] = React.useState<bigint>(BigInt(0));
     const [depositAmountStr, setDepositAmountStr] = React.useState<string>('0');
+    const [isDepositPending, setIsDepositPending] = React.useState<boolean>(false);
     const { address: userWalletAddress } = useAccount();
     const { writeContract, data: hash, isPending } = useWriteContract();
 
@@ -29,6 +30,7 @@ const DepositModal = ({
         });
 
         if (transactionReceipt.status === "success") {
+            setIsDepositPending(false)
             toast(<span>Deposit Succcessful! <a href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
         }
     };
@@ -47,6 +49,7 @@ const DepositModal = ({
 
     const handleDepositBtn = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
+        setIsDepositPending(true)
 
         // approveWrite({
         //   address: "0xA7396814b9946f3fd1616410985aF0258412477c", // the ERC20 token contract
@@ -63,6 +66,16 @@ const DepositModal = ({
             args: [depositTokenAddress, amountToDepositRaw],
         }, {
             onSuccess: handleTransactionSubmitted,
+            onError: (error) => {
+                setIsDepositPending(false)
+
+                if (error.message.includes("User rejected")) {
+                    toast.error("User rejected the transaction")
+                } else {
+                    console.error("Error executing transaction: ", error)
+                    toast.error("An error occurred while depositing LP tokens")
+                }
+            }
         })
     }, [depositAmountStr])
 
@@ -73,7 +86,7 @@ const DepositModal = ({
             <div className="bg-gray-50 rounded-3xl w-full max-w-md p-6 shadow-xl border border-gray-700" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-bold">Deposit LP Tokens</h2>
-                    <button className="text-gray-400 hover:text-white cursor-pointer" onClick={() => onClose(false)}>
+                    <button className="text-gray-400 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200 cursor-pointer" onClick={() => onClose(false)}>
                         <X />
                     </button>
                 </div>
@@ -118,10 +131,15 @@ const DepositModal = ({
                         Cancel
                     </button>
                     <button
-                        className="w-1/2 bg-orange-300 hover:bg-orange-400 cursor-pointer text-white font-semibold py-3 px-4 rounded-xl transition"
+                        className={`flex w-1/2 items-center bg-orange-300 text-white font-semibold py-3 px-4 rounded-xl transition ${depositAmountStr === '0' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
                         onClick={handleDepositBtn}
+                        disabled={depositAmountStr === '0' || isDepositPending}
                     >
-                        Deposit
+                        {isDepositPending ? <Loader2 className="w-full animate-spin" size={20} /> : (
+                            <span className="w-full text-center">
+                                Deposit
+                            </span>
+                        )}
                     </button>
                 </div>
             </div>
