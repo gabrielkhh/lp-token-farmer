@@ -2,8 +2,11 @@ import React, { Dispatch, SetStateAction, useCallback } from 'react'
 import { X } from 'tabler-icons-react'
 import { Address } from 'viem'
 import { useGetTokenInfoWithBalance } from '../hooks/token'
-import { useAccount } from 'wagmi'
+import { useAccount, useConfig, useWriteContract } from 'wagmi'
 import { calculateBigIntPercentage, decimalToBigInt, formatTokenAmountAsString } from '../utils'
+import { pundixFarmContractConfig } from '../constants'
+import { waitForTransactionReceipt } from "@wagmi/core";
+import toast from 'react-hot-toast'
 
 const DepositModal = ({
     isOpen,
@@ -14,9 +17,21 @@ const DepositModal = ({
     onClose: Dispatch<SetStateAction<boolean>>
     depositTokenAddress: Address
 }) => {
+    const config = useConfig();
     const [lpTokenAmount, setLpTokenAmount] = React.useState<bigint>(BigInt(0));
     const [depositAmountStr, setDepositAmountStr] = React.useState<string>('0');
     const { address: userWalletAddress } = useAccount();
+    const { writeContract, data: hash, isPending } = useWriteContract();
+
+    const handleTransactionSubmitted = async (txHash: string) => {
+        const transactionReceipt = await waitForTransactionReceipt(config, {
+            hash: txHash as `0x${string}`,
+        });
+
+        if (transactionReceipt.status === "success") {
+            toast(<span>Deposit Succcessful! <a href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
+        }
+    };
 
     const lpTokenInfo = useGetTokenInfoWithBalance(depositTokenAddress, userWalletAddress)
 
@@ -29,6 +44,27 @@ const DepositModal = ({
         const percentageAmount = calculateBigIntPercentage(lpTokenInfo.tokenBalance.formattedBalance, percentage, lpTokenInfo.tokenInfo.decimals)
         setLpTokenAmount(decimalToBigInt(percentageAmount, lpTokenInfo.tokenInfo.decimals))
     }, [lpTokenInfo, lpTokenInfo.tokenBalance.formattedBalance, lpTokenInfo.tokenBalance.data])
+
+    const handleDepositBtn = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault()
+
+        // approveWrite({
+        //   address: "0xA7396814b9946f3fd1616410985aF0258412477c", // the ERC20 token contract
+        //   abi: erc20Abi,
+        //   functionName: 'approve',
+        //   args: ["0x439ec8159740a9B9a579F286963Ac1C050aF31C8", BigInt(100)], // allow proxy to spend 1 token
+        // })
+
+        const amountToDepositRaw = decimalToBigInt(depositAmountStr, lpTokenInfo.tokenInfo.decimals)
+
+        writeContract({
+            ...pundixFarmContractConfig,
+            functionName: 'deposit',
+            args: [depositTokenAddress, amountToDepositRaw],
+        }, {
+            onSuccess: handleTransactionSubmitted,
+        })
+    }, [depositAmountStr])
 
     if (!isOpen) return null
 
@@ -77,32 +113,16 @@ const DepositModal = ({
                     </div>
                 </div>
 
-                <div className="bg-gray-900 rounded-xl p-4 mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-gray-400">You will receive (estimated)</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                            <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center mr-2">
-                                <img src="/api/placeholder/24/24" alt="LP Token" className="w-6 h-6 rounded-full" />
-                            </div>
-                            <span>0.00 LP Tokens</span>
-                        </div>
-                    </div>
-                </div>
-
                 <div className="flex space-x-4">
-                    <button className="w-1/2 bg-gray-200 hover:bg-gray-300 cursor-pointer text-black font-semibold py-3 px-4 rounded-xl transition">
+                    <button className="w-1/2 bg-gray-200 hover:bg-gray-300 cursor-pointer text-black font-semibold py-3 px-4 rounded-xl transition" onClick={() => onClose(false)}>
                         Cancel
                     </button>
-                    <button className="w-1/2 bg-orange-300 hover:bg-orange-400 cursor-pointer text-white font-semibold py-3 px-4 rounded-xl transition">
+                    <button
+                        className="w-1/2 bg-orange-300 hover:bg-orange-400 cursor-pointer text-white font-semibold py-3 px-4 rounded-xl transition"
+                        onClick={handleDepositBtn}
+                    >
                         Deposit
                     </button>
-                </div>
-
-
-                <div className="mt-4 text-sm text-gray-400 text-center">
-                    Confirm transaction in your wallet
                 </div>
             </div>
         </div>

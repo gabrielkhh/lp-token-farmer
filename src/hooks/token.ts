@@ -42,7 +42,7 @@ export const useGetTokenBalance = (tokenAddress: Address | undefined, userAddres
     const { data: decimals } = useGetTokenDecimals(tokenAddress)
 
     // const formattedBalance = readResult.data !== undefined && decimals ? Number(readResult.data) / 10 ** Number(decimals) : undefined
-    const formattedBalance = formatTokenAmountAsString(readResult.data, decimals)
+    const formattedBalance = formatTokenAmountAsString(readResult.data ?? BigInt(0), decimals)
 
     return {
         rawBalance: readResult.data,
