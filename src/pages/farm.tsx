@@ -1,15 +1,13 @@
 import React from 'react'
-import { useGetPoolInfo, useGetPoolToken, useGetUserPositions } from '../hooks/pool';
+import { useGetPoolInfo, useGetPoolToken, useGetPoolTokens, useGetUserPositions } from '../hooks/pool';
 import { useAccount, useReadContract, useWriteContract } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { pundixFarmContractConfig } from '../constants';
-import { Address, parseGwei } from 'viem';
+import { Address } from 'viem';
 import LPCard from '../components/LPCard';
 
 const Farm = () => {
     const { isConnected, address: userWalletAddress } = useAccount();
-    const tokenA = useGetPoolToken(BigInt(0));
-    const tokenB = useGetPoolToken(BigInt(1));
+    const lpTokens = useGetPoolTokens();
 
     return (
         <div className="flex flex-col gap-3">
@@ -27,50 +25,13 @@ const Farm = () => {
                 </div>
             </div>
 
-            <div className="flex flex-wrap gap-6 mb-10">
-                <div className="flex flex-col">
-                    <span className="text-gray-400 text-xs mb-1">FEE TIER</span>
-                    <div className="bg-gray-800 bg-opacity-50 px-3 py-1 rounded-full text-sm">
-                        V2 | 0.25%
-                    </div>
-                </div>
-
-                <div className="flex flex-col">
-                    <span className="text-gray-400 text-xs mb-1">NETWORK</span>
-                    <div className="bg-gray-800 bg-opacity-50 px-3 py-1 rounded-full text-sm flex items-center">
-                        <div className="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
-                        BNB Chain
-                    </div>
-                </div>
-
-                <div className="flex flex-col">
-                    <span className="text-gray-400 text-xs mb-1">APR</span>
-                    <div className="bg-gray-800 bg-opacity-50 px-3 py-1 rounded-full text-sm flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
-                        </svg>
-                        <span className="text-green-400">Up to</span>
-                        <span className="text-green-400 font-bold ml-1">10.76%</span>
-                        <span className="text-gray-400 line-through ml-2">5.86%</span>
-                    </div>
-                </div>
-
-                <div className="flex flex-col">
-                    <span className="text-gray-400 text-xs mb-1">POOL TYPE</span>
-                    <div className="bg-gray-800 bg-opacity-50 px-3 py-1 rounded-full text-sm">
-                        <span className="text-purple-400 font-bold">v2</span>
-                    </div>
-                </div>
-            </div>
-
             {/* User Positions */}
             {!isConnected ? (
                 <ConnectButton />
             ) : (
-                <>
-                    <LPCard tokenAddress={tokenA.address as Address} />
-                    <LPCard tokenAddress={tokenB.address as Address} />
-                </>
+                lpTokens.map((lpToken, index) => (
+                    <LPCard key={index} tokenAddress={lpToken.address as Address} />
+                ))
             )}
         </div >
     )

@@ -9,6 +9,30 @@ import { waitForTransactionReceipt } from "@wagmi/core";
 import { NumericFormat } from 'react-number-format';
 import toast from 'react-hot-toast'
 import { useTokenApproval } from '../hooks/tokenSpending'
+import { TransactionActionStatus } from '../types'
+
+const StatusMessage = ({ status, message }: { status: TransactionActionStatus; message: string }) => {
+    let elColor = 'text-gray-500';
+    let elIcon = <Loader2 className="animate-spin" size={12} />
+
+    switch (status) {
+        case "success":
+            elColor = 'text-green-400';
+            elIcon = <Check size={14} />
+            break;
+        case "error":
+            elColor = 'text-red-400';
+            elIcon = <X size={14} />
+            break;
+    }
+
+    return (
+        <div className={`flex items-center gap-1 ${elColor}`}>
+            {elIcon}
+            <span>{message}</span>
+        </div>
+    )
+}
 
 const DepositModal = ({
     isOpen,
@@ -22,6 +46,7 @@ const DepositModal = ({
     const config = useConfig();
     const [depositAmountStr, setDepositAmountStr] = React.useState<string>('0');
     const [isDepositPending, setIsDepositPending] = React.useState<boolean>(false);
+    const [depositAmountInNumber, setDepositAmountInNumber] = React.useState<number>(0);
     const [triggeredDepositButton, setTriggeredDepositButton] = React.useState<boolean>(false);
     const { address: userWalletAddress } = useAccount();
     const { writeContract, data: hash, isPending } = useWriteContract();
@@ -121,6 +146,7 @@ const DepositModal = ({
                                 className='bg-transparent w-full text-xl font-medium focus:outline-none'
                                 onValueChange={(values, _sourceInfo) => {
                                     setDepositAmountStr(values.value)
+                                    setDepositAmountInNumber(values.floatValue ?? 0)
                                 }}
                             />
                         </div>
@@ -152,9 +178,9 @@ const DepositModal = ({
                         Cancel
                     </button>
                     <button
-                        className={`flex w-1/2 items-center bg-orange-300 text-white font-semibold py-3 px-4 rounded-xl transition ${depositAmountStr === '0' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
+                        className={`flex w-1/2 items-center bg-orange-300 text-white font-semibold py-3 px-4 rounded-xl transition ${depositAmountInNumber === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
                         onClick={handleDepositBtn}
-                        disabled={depositAmountStr === '0' || isDepositPending}
+                        disabled={depositAmountInNumber === 0 || isDepositPending}
                     >
                         {isDepositPending ? <Loader2 className="w-full animate-spin" size={20} /> : (
                             <span className="w-full text-center">
@@ -164,24 +190,10 @@ const DepositModal = ({
                     </button>
                 </div>
 
-                {triggeredDepositButton && (<div className="flex flex-col mt-2 text-gray-500 font-medium text-sm">
-                    <div className={`flex items-center gap-1 ${!needsApproval && 'text-green-400'}`}>
-                        {needsApproval ? (
-                            <Loader2 className="animate-spin" size={12} />
-                        ) : (
-                            <Check size={14} />
-                        )}
-                        <span>Approve token spend</span>
-                    </div>
-                    <div className={`flex items-center gap-1 ${!isDepositPending && 'text-green-400'}`}>
-                        {isDepositPending ? (
-                            <Loader2 className="animate-spin" size={12} />
-                        ) : (
-                            <Check size={14} />
-                        )}
-                        <span>Approve deposit transaction</span>
-                    </div>
-                </div>)}
+                {/* {triggeredDepositButton && (<div className="flex flex-col mt-2 text-gray-500 font-medium text-sm">
+                    {needsApproval && (<StatusMessage status={status} message={'Approve token spend'} />)}
+                    <StatusMessage status={status} message={'Approve deposit transaction'} />
+                </div>)} */}
             </div>
         </div >
     )

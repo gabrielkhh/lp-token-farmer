@@ -1,13 +1,13 @@
-import React, { Dispatch, SetStateAction, useCallback } from 'react'
+import React, { Dispatch, SetStateAction, useCallback, useMemo } from 'react'
 import { Loader2, X } from 'tabler-icons-react'
 import { Address } from 'viem'
-import { useGetTokenInfoWithBalance } from '../hooks/token'
+import { useGetToken, useGetTokenInfoWithBalance } from '../hooks/token'
 import { useAccount, useConfig, useWriteContract } from 'wagmi'
 import { calculateBigIntPercentage, decimalToBigInt, formatTokenAmountAsString } from '../utils'
-import { pundixFarmContractConfig } from '../constants'
+import { pundixFarmContractConfig, PURSE_TOKEN } from '../constants'
 import { waitForTransactionReceipt } from "@wagmi/core";
 import toast from 'react-hot-toast'
-import { useGetUserPositions } from '../hooks/pool'
+import { useGetPoolInfo, useGetUserPendingRewards, useGetUserPositions } from '../hooks/pool'
 import { NumericFormat } from 'react-number-format'
 
 const WithdrawModal = ({
@@ -21,11 +21,23 @@ const WithdrawModal = ({
 }) => {
     const config = useConfig();
     const [withdrawAmountStr, setWithdrawAmountStr] = React.useState<string>('0');
-    const [isDepositPending, setIsDepositPending] = React.useState<boolean>(false);
+    const [withdrawAmountInNumber, setWithdrawAmountInNumber] = React.useState<number>(0);
+    const [isWithdrawPending, setIsWithdrawPending] = React.useState<boolean>(false);
     const { address: userWalletAddress } = useAccount();
     const { writeContract, data: hash, isPending } = useWriteContract();
     const lpTokenInfo = useGetTokenInfoWithBalance(withdrawTokenAddress, userWalletAddress)
     const userInfo = useGetUserPositions(withdrawTokenAddress, userWalletAddress);
+    const purseTokenInfo = useGetToken(PURSE_TOKEN)
+    const poolInfo = useGetPoolInfo(withdrawTokenAddress);
+
+    const { data: userPendingRewards } = useGetUserPendingRewards(withdrawTokenAddress, userWalletAddress)
+
+    const pendingReward = useMemo(() => {
+        if (typeof userInfo?.amount !== "bigint" || typeof poolInfo?.accPursePerShare !== "bigint" || typeof userInfo?.rewardDebt !== "bigint") {
+            return BigInt(0)
+        }
+        return (userInfo?.amount * poolInfo?.accPursePerShare) - userInfo?.rewardDebt
+    }, [userInfo, poolInfo])
 
     const handleTransactionSubmitted = async (txHash: string) => {
         const transactionReceipt = await waitForTransactionReceipt(config, {
@@ -33,7 +45,7 @@ const WithdrawModal = ({
         });
 
         if (transactionReceipt.status === "success") {
-            setIsDepositPending(false)
+            setIsWithdrawPending(false)
             toast(<span>Withdraw Succcessful! <a href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
         }
     };
@@ -46,7 +58,7 @@ const WithdrawModal = ({
 
     const handleWithdrawBtn = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
-        setIsDepositPending(true)
+        setIsWithdrawPending(true)
         // setTriggeredDepositButton(true)
 
         const amountToWithdrawRaw = decimalToBigInt(withdrawAmountStr, lpTokenInfo.tokenInfo.decimals)
@@ -58,7 +70,7 @@ const WithdrawModal = ({
         }, {
             onSuccess: handleTransactionSubmitted,
             onError: (error) => {
-                setIsDepositPending(false)
+                setIsWithdrawPending(false)
 
                 if (error.message.includes("User rejected")) {
                     toast.error("User rejected the transaction")
@@ -75,12 +87,15 @@ const WithdrawModal = ({
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-filter backdrop-blur-sm flex items-center justify-center z-50" onClick={() => onClose(false)}>
-            <div className="bg-gray-50 rounded-3xl w-full max-w-md p-6 shadow-xl border border-gray-700" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold">Withdraw LP Tokens</h2>
-                    <button className="text-gray-400 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200 cursor-pointer" onClick={() => onClose(false)}>
-                        <X />
-                    </button>
+            <div className="flex flex-col gap-3 bg-gray-50 rounded-3xl w-full max-w-md p-6 shadow-xl border border-gray-700" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-col">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold">Withdraw LP Tokens</h2>
+                        <button className="text-gray-400 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200 cursor-pointer" onClick={() => onClose(false)}>
+                            <X />
+                        </button>
+                    </div>
+                    <span className="text-xs text-gray-500">You will also claim any pending rewards when you withdraw any amount of your LP tokens from the farm.</span>
                 </div>
 
                 <div className="mb-6">
@@ -99,6 +114,7 @@ const WithdrawModal = ({
                                 className='bg-transparent w-full text-xl font-medium focus:outline-none'
                                 onValueChange={(values, _sourceInfo) => {
                                     setWithdrawAmountStr(values.value)
+                                    setWithdrawAmountInNumber(values.floatValue ?? 0)
                                 }}
                             />
                         </div>
@@ -125,16 +141,21 @@ const WithdrawModal = ({
                     </div>
                 </div>
 
+                <div>
+                    <span className="text-sm text-gray-500">Pending Rewards:</span>
+                    <span className="text-gray-800">{formatTokenAmountAsString(userPendingRewards as bigint ?? 0n, purseTokenInfo.decimals) ?? "0"} {purseTokenInfo.symbol}</span>
+                </div>
+
                 <div className="flex space-x-4">
                     <button className="w-1/2 bg-gray-200 hover:bg-gray-300 cursor-pointer text-black font-semibold py-3 px-4 rounded-xl transition" onClick={() => onClose(false)}>
                         Cancel
                     </button>
                     <button
-                        className={`flex w-1/2 items-center bg-orange-300 text-white font-semibold py-3 px-4 rounded-xl transition ${withdrawAmountStr === '0' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
-                        onClick={(e) => {handleWithdrawBtn(e)}}
-                        disabled={withdrawAmountStr === '0' || isDepositPending}
+                        className={`flex w-1/2 items-center bg-orange-300 text-white font-semibold py-3 px-4 rounded-xl transition ${withdrawAmountInNumber === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
+                        onClick={(e) => { handleWithdrawBtn(e) }}
+                        disabled={withdrawAmountInNumber === 0 || isWithdrawPending}
                     >
-                        {isDepositPending ? <Loader2 className="w-full animate-spin" size={20} /> : (
+                        {isWithdrawPending ? <Loader2 className="w-full animate-spin" size={20} /> : (
                             <span className="w-full text-center">
                                 Withdraw
                             </span>
