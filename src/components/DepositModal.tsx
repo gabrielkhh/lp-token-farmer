@@ -1,12 +1,14 @@
 import React, { Dispatch, SetStateAction, useCallback } from 'react'
-import { Loader2, X } from 'tabler-icons-react'
+import { Check, Loader2, X } from 'tabler-icons-react'
 import { Address } from 'viem'
 import { useGetTokenInfoWithBalance } from '../hooks/token'
 import { useAccount, useConfig, useWriteContract } from 'wagmi'
-import { calculateBigIntPercentage, decimalToBigInt, formatTokenAmountAsString } from '../utils'
-import { pundixFarmContractConfig } from '../constants'
+import { calculateBigIntPercentage, decimalToBigInt } from '../utils'
+import { LP_FARM_CONTRACT, pundixFarmContractConfig } from '../constants'
 import { waitForTransactionReceipt } from "@wagmi/core";
+import { NumericFormat } from 'react-number-format';
 import toast from 'react-hot-toast'
+import { useTokenApproval } from '../hooks/tokenSpending'
 
 const DepositModal = ({
     isOpen,
@@ -18,11 +20,20 @@ const DepositModal = ({
     depositTokenAddress: Address
 }) => {
     const config = useConfig();
-    const [lpTokenAmount, setLpTokenAmount] = React.useState<bigint>(BigInt(0));
     const [depositAmountStr, setDepositAmountStr] = React.useState<string>('0');
     const [isDepositPending, setIsDepositPending] = React.useState<boolean>(false);
+    const [triggeredDepositButton, setTriggeredDepositButton] = React.useState<boolean>(false);
     const { address: userWalletAddress } = useAccount();
     const { writeContract, data: hash, isPending } = useWriteContract();
+
+    const lpTokenInfo = useGetTokenInfoWithBalance(depositTokenAddress, userWalletAddress)
+
+    const { approve, isApproving, needsApproval, allowance, error, status } = useTokenApproval({
+        tokenAddress: depositTokenAddress,
+        spenderContractAddress: LP_FARM_CONTRACT,
+        userAddress: userWalletAddress as unknown as Address,
+        amount: decimalToBigInt(depositAmountStr, lpTokenInfo.tokenInfo.decimals)
+    })
 
     const handleTransactionSubmitted = async (txHash: string) => {
         const transactionReceipt = await waitForTransactionReceipt(config, {
@@ -31,62 +42,65 @@ const DepositModal = ({
 
         if (transactionReceipt.status === "success") {
             setIsDepositPending(false)
-            toast(<span>Deposit Succcessful! <a href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
+            toast(<span>Deposit Succcessful! <a className="text-orange-500 underline" href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
         }
     };
 
-    const lpTokenInfo = useGetTokenInfoWithBalance(depositTokenAddress, userWalletAddress)
-
-    const formattedTokenAmountToDeposit = React.useMemo(() => {
-        return formatTokenAmountAsString(lpTokenAmount, lpTokenInfo.tokenInfo.decimals)
-    }, [lpTokenAmount, lpTokenInfo])
-
     const handlePercentageFill = useCallback((e: React.MouseEvent<HTMLButtonElement>, percentage: number) => {
         e.preventDefault();
-        const percentageAmount = calculateBigIntPercentage(lpTokenInfo.tokenBalance.formattedBalance, percentage, lpTokenInfo.tokenInfo.decimals)
-        setLpTokenAmount(decimalToBigInt(percentageAmount, lpTokenInfo.tokenInfo.decimals))
-    }, [lpTokenInfo, lpTokenInfo.tokenBalance.formattedBalance, lpTokenInfo.tokenBalance.data])
+        const percentageAmount = calculateBigIntPercentage(lpTokenInfo.tokenBalance.rawBalance ?? BigInt(0), percentage, lpTokenInfo.tokenInfo.decimals)
+        setDepositAmountStr(percentageAmount)
+    }, [lpTokenInfo, lpTokenInfo.tokenBalance.rawBalance, lpTokenInfo.tokenBalance.data])
 
     const handleDepositBtn = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
         setIsDepositPending(true)
+        setTriggeredDepositButton(true)
 
-        // approveWrite({
-        //   address: "0xA7396814b9946f3fd1616410985aF0258412477c", // the ERC20 token contract
-        //   abi: erc20Abi,
-        //   functionName: 'approve',
-        //   args: ["0x439ec8159740a9B9a579F286963Ac1C050aF31C8", BigInt(100)], // allow proxy to spend 1 token
-        // })
+        if (needsApproval) {
+            approve()
 
-        const amountToDepositRaw = decimalToBigInt(depositAmountStr, lpTokenInfo.tokenInfo.decimals)
-
-        writeContract({
-            ...pundixFarmContractConfig,
-            functionName: 'deposit',
-            args: [depositTokenAddress, amountToDepositRaw],
-        }, {
-            onSuccess: handleTransactionSubmitted,
-            onError: (error) => {
-                setIsDepositPending(false)
-
-                if (error.message.includes("User rejected")) {
-                    toast.error("User rejected the transaction")
-                } else {
-                    console.error("Error executing transaction: ", error)
-                    toast.error("An error occurred while depositing LP tokens")
-                }
+            while (status === "pending") {
+                // Wait for the approval request to be handled by the user
             }
-        })
-    }, [depositAmountStr])
+        }
+
+        if (status === "success" || !needsApproval) {
+            const amountToDepositRaw = decimalToBigInt(depositAmountStr, lpTokenInfo.tokenInfo.decimals)
+
+            writeContract({
+                ...pundixFarmContractConfig,
+                functionName: 'deposit',
+                args: [depositTokenAddress, amountToDepositRaw],
+            }, {
+                onSuccess: handleTransactionSubmitted,
+                onError: (error) => {
+                    setIsDepositPending(false)
+
+                    if (error.message.includes("User rejected")) {
+                        toast.error("User rejected the transaction")
+                    } else {
+                        console.error("Error executing transaction: ", error)
+                        toast.error("An error occurred while depositing LP tokens")
+                    }
+                }
+            })
+        }
+    }, [depositAmountStr, needsApproval, approve, lpTokenInfo.tokenInfo.decimals])
+
+    const handleCloseModal = () => {
+        setTriggeredDepositButton(false)
+        onClose(false)
+    }
 
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-filter backdrop-blur-sm flex items-center justify-center z-50" onClick={() => onClose(false)}>
-            <div className="bg-gray-50 rounded-3xl w-full max-w-md p-6 shadow-xl border border-gray-700" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/70 backdrop-filter backdrop-blur-sm flex items-center justify-center z-50" onClick={() => handleCloseModal()}>
+            <div className="flex flex-col gap-3 bg-gray-50 rounded-3xl w-full max-w-md p-6 shadow-xl border border-gray-700" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-bold">Deposit LP Tokens</h2>
-                    <button className="text-gray-400 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200 cursor-pointer" onClick={() => onClose(false)}>
+                    <button className="text-gray-400 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200 cursor-pointer" onClick={() => handleCloseModal()}>
                         <X />
                     </button>
                 </div>
@@ -95,12 +109,19 @@ const DepositModal = ({
                     <label className="block text-gray-400 text-sm mb-2">Amount to deposit</label>
                     <div className="relative">
                         <div className="flex bg-gray-100 rounded-2xl p-4 border border-gray-100 focus-within:border-teal-400">
-                            <input
-                                type="text"
+                            <NumericFormat
                                 value={depositAmountStr}
-                                onChange={(e) => setDepositAmountStr(e.target.value)}
-                                className="bg-transparent w-full text-xl font-medium focus:outline-none"
-                                placeholder="0.0"
+                                valueIsNumericString={true}
+                                allowNegative={false}
+                                allowLeadingZeros={false}
+                                isAllowed={(values) => {
+                                    if (decimalToBigInt(values.value, lpTokenInfo.tokenInfo.decimals) > (lpTokenInfo.tokenBalance.rawBalance ?? BigInt(0))) return false
+                                    return true
+                                }}
+                                className='bg-transparent w-full text-xl font-medium focus:outline-none'
+                                onValueChange={(values, _sourceInfo) => {
+                                    setDepositAmountStr(values.value)
+                                }}
                             />
                         </div>
 
@@ -127,7 +148,7 @@ const DepositModal = ({
                 </div>
 
                 <div className="flex space-x-4">
-                    <button className="w-1/2 bg-gray-200 hover:bg-gray-300 cursor-pointer text-black font-semibold py-3 px-4 rounded-xl transition" onClick={() => onClose(false)}>
+                    <button className="w-1/2 bg-gray-200 hover:bg-gray-300 cursor-pointer text-black font-semibold py-3 px-4 rounded-xl transition" onClick={() => handleCloseModal()}>
                         Cancel
                     </button>
                     <button
@@ -142,8 +163,27 @@ const DepositModal = ({
                         )}
                     </button>
                 </div>
+
+                {triggeredDepositButton && (<div className="flex flex-col mt-2 text-gray-500 font-medium text-sm">
+                    <div className={`flex items-center gap-1 ${!needsApproval && 'text-green-400'}`}>
+                        {needsApproval ? (
+                            <Loader2 className="animate-spin" size={12} />
+                        ) : (
+                            <Check size={14} />
+                        )}
+                        <span>Approve token spend</span>
+                    </div>
+                    <div className={`flex items-center gap-1 ${!isDepositPending && 'text-green-400'}`}>
+                        {isDepositPending ? (
+                            <Loader2 className="animate-spin" size={12} />
+                        ) : (
+                            <Check size={14} />
+                        )}
+                        <span>Approve deposit transaction</span>
+                    </div>
+                </div>)}
             </div>
-        </div>
+        </div >
     )
 }
 

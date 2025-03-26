@@ -8,6 +8,7 @@ import { pundixFarmContractConfig } from '../constants'
 import { waitForTransactionReceipt } from "@wagmi/core";
 import toast from 'react-hot-toast'
 import { useGetUserPositions } from '../hooks/pool'
+import { NumericFormat } from 'react-number-format'
 
 const WithdrawModal = ({
     isOpen,
@@ -19,8 +20,7 @@ const WithdrawModal = ({
     withdrawTokenAddress: Address
 }) => {
     const config = useConfig();
-    const [lpTokenAmount, setLpTokenAmount] = React.useState<bigint>(BigInt(0));
-    const [depositAmountStr, setDepositAmountStr] = React.useState<string>('0');
+    const [withdrawAmountStr, setWithdrawAmountStr] = React.useState<string>('0');
     const [isDepositPending, setIsDepositPending] = React.useState<boolean>(false);
     const { address: userWalletAddress } = useAccount();
     const { writeContract, data: hash, isPending } = useWriteContract();
@@ -34,44 +34,42 @@ const WithdrawModal = ({
 
         if (transactionReceipt.status === "success") {
             setIsDepositPending(false)
-            toast(<span>Deposit Succcessful! <a href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
+            toast(<span>Withdraw Succcessful! <a href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
         }
     };
 
-    const formattedTokenAmountToDeposit = React.useMemo(() => {
-        return formatTokenAmountAsString(lpTokenAmount, lpTokenInfo.tokenInfo.decimals)
-    }, [lpTokenAmount, lpTokenInfo])
-
     const handlePercentageFill = useCallback((e: React.MouseEvent<HTMLButtonElement>, percentage: number) => {
         e.preventDefault();
-        const percentageAmount = calculateBigIntPercentage(lpTokenInfo.tokenBalance.formattedBalance, percentage, lpTokenInfo.tokenInfo.decimals)
-        setLpTokenAmount(decimalToBigInt(percentageAmount, lpTokenInfo.tokenInfo.decimals))
-    }, [lpTokenInfo, lpTokenInfo.tokenBalance.formattedBalance, lpTokenInfo.tokenBalance.data])
+        const percentageAmount = calculateBigIntPercentage(userInfo?.amount ?? BigInt(0), percentage, lpTokenInfo.tokenInfo.decimals)
+        setWithdrawAmountStr(percentageAmount)
+    }, [lpTokenInfo, userInfo?.amount, lpTokenInfo.tokenBalance.data])
 
-    // const handleDepositBtn = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    //     e.preventDefault()
-    //     setIsDepositPending(true)
+    const handleWithdrawBtn = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault()
+        setIsDepositPending(true)
+        // setTriggeredDepositButton(true)
 
-    //     const amountToDepositRaw = decimalToBigInt(depositAmountStr, lpTokenInfo.tokenInfo.decimals)
+        const amountToWithdrawRaw = decimalToBigInt(withdrawAmountStr, lpTokenInfo.tokenInfo.decimals)
 
-    //     writeContract({
-    //         ...pundixFarmContractConfig,
-    //         functionName: 'deposit',
-    //         args: [depositTokenAddress, amountToDepositRaw],
-    //     }, {
-    //         onSuccess: handleTransactionSubmitted,
-    //         onError: (error) => {
-    //             setIsDepositPending(false)
+        writeContract({
+            ...pundixFarmContractConfig,
+            functionName: 'withdraw',
+            args: [withdrawTokenAddress, amountToWithdrawRaw],
+        }, {
+            onSuccess: handleTransactionSubmitted,
+            onError: (error) => {
+                setIsDepositPending(false)
 
-    //             if (error.message.includes("User rejected")) {
-    //                 toast.error("User rejected the transaction")
-    //             } else {
-    //                 console.error("Error executing transaction: ", error)
-    //                 toast.error("An error occurred while depositing LP tokens")
-    //             }
-    //         }
-    //     })
-    // }, [depositAmountStr])
+                if (error.message.includes("User rejected")) {
+                    toast.error("User rejected the transaction")
+                } else {
+                    console.error("Error executing transaction: ", error)
+                    toast.error("An error occurred while withdrawing LP tokens")
+                }
+            }
+        })
+
+    }, [withdrawAmountStr, lpTokenInfo.tokenInfo.decimals])
 
     if (!isOpen) return null
 
@@ -89,18 +87,25 @@ const WithdrawModal = ({
                     <label className="block text-gray-400 text-sm mb-2">Amount to withdraw</label>
                     <div className="relative">
                         <div className="flex bg-gray-100 rounded-2xl p-4 border border-gray-100 focus-within:border-teal-400">
-                            <input
-                                type="text"
-                                value={depositAmountStr}
-                                onChange={(e) => setDepositAmountStr(e.target.value)}
-                                className="bg-transparent w-full text-xl font-medium focus:outline-none"
-                                placeholder="0.0"
+                            <NumericFormat
+                                value={withdrawAmountStr}
+                                valueIsNumericString={true}
+                                allowNegative={false}
+                                allowLeadingZeros={false}
+                                isAllowed={(values) => {
+                                    if (decimalToBigInt(values.value, lpTokenInfo.tokenInfo.decimals) > (lpTokenInfo.tokenBalance.rawBalance ?? BigInt(0))) return false
+                                    return true
+                                }}
+                                className='bg-transparent w-full text-xl font-medium focus:outline-none'
+                                onValueChange={(values, _sourceInfo) => {
+                                    setWithdrawAmountStr(values.value)
+                                }}
                             />
                         </div>
 
                         <div className="flex justify-between items-center mt-2 px-1 gap-3">
                             <div className="text-sm text-gray-500">
-                                Staked: <span className="text-gray-800">{userInfo?.amount} {lpTokenInfo.tokenInfo.symbol}</span>
+                                Staked: <span className="text-gray-800">{formatTokenAmountAsString(userInfo?.amount, lpTokenInfo.tokenInfo.decimals)} {lpTokenInfo.tokenInfo.symbol}</span>
                             </div>
                             <div className="flex space-x-2 text-white">
                                 <button className="bg-orange-300 hover:bg-orange-400 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 25)}>
@@ -125,9 +130,9 @@ const WithdrawModal = ({
                         Cancel
                     </button>
                     <button
-                        className={`flex w-1/2 items-center bg-orange-300 text-white font-semibold py-3 px-4 rounded-xl transition ${depositAmountStr === '0' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
-                        onClick={() => { }}
-                        disabled={depositAmountStr === '0' || isDepositPending}
+                        className={`flex w-1/2 items-center bg-orange-300 text-white font-semibold py-3 px-4 rounded-xl transition ${withdrawAmountStr === '0' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
+                        onClick={(e) => {handleWithdrawBtn(e)}}
+                        disabled={withdrawAmountStr === '0' || isDepositPending}
                     >
                         {isDepositPending ? <Loader2 className="w-full animate-spin" size={20} /> : (
                             <span className="w-full text-center">

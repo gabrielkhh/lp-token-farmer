@@ -32,19 +32,6 @@ const Home: NextPage = () => {
     args: ["0xfc450e16016aF4e4197f5dB5Ca0d262fF8fD735a", "0xA7396814b9946f3fd1616410985aF0258412477c"],
   })
 
-  const { data: tokenName } = useReadContract({
-    address: poolAddress,
-    abi: erc20Abi,
-    functionName: 'name',
-    query: { enabled: !!poolAddress },
-  })
-  const { data: tokenSymbol } = useReadContract({
-    address: poolAddress,
-    abi: erc20Abi,
-    functionName: 'symbol',
-    query: { enabled: !!poolAddress },
-  })
-
   // const { data: estimatedGas, isLoading, error } = useEstimateGas({
   //   ...pundixContractConfig,
   //   parameters: {

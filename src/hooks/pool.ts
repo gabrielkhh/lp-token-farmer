@@ -1,5 +1,5 @@
-import { useReadContract, useReadContracts } from "wagmi"
-import { LP_FARM_CONTRACT, pundixFarmContractConfig } from "../constants"
+import { useReadContract } from "wagmi"
+import { pundixFarmContractConfig } from "../constants"
 import { useGetTokenDecimals, useGetTokenName, useGetTokenSymbol } from "./token"
 import { Address } from "viem"
 

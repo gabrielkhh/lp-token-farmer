@@ -56,8 +56,13 @@ export const decimalToBigInt = (decimalStr: string, decimals: number = 0): bigin
     }
 
     // Check if it's a valid decimal number
-    if (!/^-?\d+(\.\d+)?$/.test(decimalStr)) {
+    if (!/^-?(\d+(\.\d*)?|\.\d+)$/.test(decimalStr)) {
         throw new Error('Input must be a valid decimal number');
+    }
+
+    // If the number ends with a decimal point, append a zero
+    if (decimalStr.endsWith('.')) {
+        decimalStr += '0';
     }
 
     // Handle negative numbers
@@ -106,29 +111,29 @@ export const decimalToBigInt = (decimalStr: string, decimals: number = 0): bigin
     return isNegative ? -bigIntResult : bigIntResult;
 };
 
-export const calculateBigIntPercentage = (formattedBalance: string, percentage: number, decimals: number = 0): string => {
-    // Remove decimal point
-    const parts = formattedBalance.split('.');
-    const integerPart = parts[0];
-    const decimalPart = parts.length > 1 ? parts[1] : '';
-    
-    // Convert to BigInt
-    const valueAsBigInt = BigInt(integerPart + decimalPart);
-    
+export const calculateBigIntPercentage = (rawBalance: bigint, percentage: number, decimals: number = 0): string => {
+    // // Remove decimal point
+    // const parts = formattedBalance.split('.');
+    // const integerPart = parts[0];
+    // const decimalPart = parts.length > 1 ? parts[1] : '';
+
+    // // Convert to BigInt
+    // const valueAsBigInt = BigInt(integerPart + decimalPart);
+
     // Calculate percentage
-    const result = (valueAsBigInt * BigInt(percentage)) / BigInt(100);
-    
+    const result = (rawBalance * BigInt(percentage)) / BigInt(100);
+
     // Convert back to string with proper decimal places
     let resultStr = result.toString();
-    
+
     // Ensure the string has enough leading zeros
     while (resultStr.length <= decimals) {
-      resultStr = '0' + resultStr;
+        resultStr = '0' + resultStr;
     }
-    
+
     // Insert decimal point
     const resultIntegerPart = resultStr.slice(0, resultStr.length - decimals) || '0';
     const resultDecimalPart = resultStr.slice(resultStr.length - decimals);
-    
+
     return `${resultIntegerPart}.${resultDecimalPart}`;
-  }
+}

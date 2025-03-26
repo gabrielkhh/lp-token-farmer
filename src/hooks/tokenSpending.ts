@@ -21,15 +21,15 @@ export const useTokenApproval = ({
         args: [userAddress, spenderContractAddress],
     })
 
-    const { writeContract, isPending, error } = useWriteContract()
+    const { writeContract, isPending, error, status } = useWriteContract()
 
     const approve = () => {
         writeContract({
             address: tokenAddress,
             abi: erc20Abi,
             functionName: 'approve',
-            // Amount defaults to MAX_UINT256 (unlimited spending)
-            args: [spenderContractAddress, amount],
+            // Request for MAX_UINT256 for better UIUX else might need to keep requesting approval
+            args: [spenderContractAddress, MAX_UINT256],
         })
     }
 
@@ -45,5 +45,6 @@ export const useTokenApproval = ({
         allowance,
         loadingAllowance,
         error,
+        status
     }
 }
