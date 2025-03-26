@@ -30,6 +30,7 @@ export const useGetPoolTokens = () => {
     const [poolTokenAddresses, setPoolTokenAddresses] = React.useState<Address[]>([]);
     const [poolTokenList, setPoolTokenList] = React.useState<PoolTokenInfo[]>([]);
 
+    // Find out the number of pools
     const { data: poolLength, isSuccess: fetchPoolLengthIsSuccess } = useReadContract({
         ...pundixFarmContractConfig,
         functionName: 'poolLength',
@@ -47,8 +48,9 @@ export const useGetPoolTokens = () => {
         }
     }, [poolLength, fetchPoolLengthIsSuccess])
 
-
+    // Get the LP token address for each pool
     const { data: tokenList, isSuccess: fetchTokensIsSuccess } = useReadContracts({
+        // @ts-ignore
         contracts: poolIndices.map((index) => ({
             ...pundixFarmContractConfig,
             functionName: 'poolTokenList',
@@ -66,7 +68,6 @@ export const useGetPoolTokens = () => {
             }
         }
     }, [tokenList, fetchTokensIsSuccess])
-
 
     const { data: tokenNames, isSuccess: fetchTokenNamesIsSuccess } = useReadContracts({
         contracts: poolTokenAddresses.map((address) => ({

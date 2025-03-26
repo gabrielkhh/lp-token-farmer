@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { pundixFarmContractConfig, PURSE_TOKEN } from '../constants'
 import { Address } from 'viem'
-import { useAccount, useConfig, useWriteContract } from 'wagmi';
+import { useAccount, useBlockNumber, useConfig, useWriteContract } from 'wagmi';
 import { useGetPancakeTokenA, useGetPancakeTokenB, useGetPancakeTokenName } from '../hooks/pancakeLpToken';
 import { useGetPoolInfo, useGetPoolToken, useGetUserPendingRewards, useGetUserPositions } from '../hooks/pool';
 import { useGetToken, useGetTokenInfoWithBalance } from '../hooks/token';
@@ -11,6 +11,7 @@ import WithdrawModal from './WithdrawModal';
 import toast from 'react-hot-toast';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { Loader2 } from 'tabler-icons-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 const LPCard = ({
     tokenAddress
@@ -18,14 +19,23 @@ const LPCard = ({
     tokenAddress: Address
 }) => {
     const config = useConfig();
+    const queryClient = useQueryClient();
     const [isDepositModalOpen, setIsDepositModalOpen] = React.useState(false)
     const [isWithdrawModalOpen, setIsWithdrawModalOpen] = React.useState(false)
     const [isClaimingPending, setIsClaimingPending] = React.useState(false)
-    const { address: userWalletAddress } = useAccount();
+    const { address: userWalletAddress, isConnected } = useAccount();
 
     const userInfo = useGetUserPositions(tokenAddress, userWalletAddress);
     const poolInfo = useGetPoolInfo(tokenAddress);
-    const { data: userPendingRewards } = useGetUserPendingRewards(tokenAddress, userWalletAddress)
+    const { data: userPendingRewards, queryKey: pendingRewardsQueryKey } = useGetUserPendingRewards(tokenAddress, userWalletAddress)
+    const { data: blockNumber } = useBlockNumber({ watch: true })
+
+    React.useEffect(() => {
+        if (isConnected) {
+            queryClient.invalidateQueries({ queryKey: pendingRewardsQueryKey })
+        }
+    }, [blockNumber, isConnected])
+
     const { writeContract, data: hash, isPending } = useWriteContract();
 
     const { data: tokenA } = useGetPancakeTokenA(tokenAddress)
@@ -38,11 +48,8 @@ const LPCard = ({
     const tokenBInfo = useGetTokenInfoWithBalance(tokenB as Address, userWalletAddress)
 
     const pendingReward = useMemo(() => {
-        if (typeof userInfo?.amount !== "bigint" || typeof poolInfo?.accPursePerShare !== "bigint" || typeof userInfo?.rewardDebt !== "bigint") {
-            return BigInt(0)
-        }
-        return (userInfo?.amount * poolInfo?.accPursePerShare) - userInfo?.rewardDebt
-    }, [userInfo, poolInfo])
+        return formatTokenAmountAsString(userPendingRewards as bigint ?? 0n, purseTokenInfo.decimals)
+    }, [userPendingRewards, purseTokenInfo.decimals])
 
     const handleTransactionSubmitted = async (txHash: string) => {
         const transactionReceipt = await waitForTransactionReceipt(config, {
@@ -76,8 +83,6 @@ const LPCard = ({
         })
     }
 
-    console.log("LP-CARD", tokenAddress, poolInfo, userInfo,)
-
     return (
         <div className="flex flex-col gap-2 bg-gray-100 rounded-xl w-full p-3">
             <DepositModal isOpen={isDepositModalOpen} onClose={setIsDepositModalOpen} depositTokenAddress={tokenAddress} />
@@ -91,7 +96,7 @@ const LPCard = ({
                 Staked: {formatTokenAmountAsString(userInfo?.amount ?? BigInt(0), lpTokenInfo.tokenInfo.decimals) ?? "0"} {lpTokenInfo.tokenInfo.symbol}
             </div>
             <div>
-                Pending Rewards: {formatTokenAmountAsString(userPendingRewards as bigint ?? 0n, purseTokenInfo.decimals) ?? "0"} {purseTokenInfo.symbol}
+                Pending Rewards: <span key={userPendingRewards as bigint} className="bg-test transition-opacity duration-300 animate-fade-in">{pendingReward}</span> {purseTokenInfo.symbol}
             </div>
 
 
@@ -103,7 +108,7 @@ const LPCard = ({
             <div className="flex gap-2">
                 <button className="bg-purple-400 p-3 rounded-xl text-white hover:bg-purple-500 cursor-pointer" onClick={() => setIsDepositModalOpen(true)}>Deposit LP Tokens</button>
                 <button className="bg-red-400 p-3 rounded-xl text-white hover:bg-red-500 cursor-pointer" onClick={() => setIsWithdrawModalOpen(true)}>Withdraw Stake</button>
-                {pendingReward > BigInt(0) && (<button className="bg-orange-300 p-3 w-36 rounded-xl text-white hover:bg-orange-400 cursor-pointer" onClick={() => handleClaimRewards()}>
+                {!!(userPendingRewards as bigint) && (<button className="bg-orange-300 p-3 w-36 rounded-xl text-white hover:bg-orange-400 cursor-pointer" onClick={() => handleClaimRewards()}>
                     {isClaimingPending ? <Loader2 className="w-full animate-spin" size={20} /> : (
                         <span className="w-full text-center">
                             Claim Rewards

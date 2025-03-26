@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 const Navbar = () => {
   return (
-    <nav className="px-4 py-5 flex justify-between items-center">
+    <nav className="px-4 py-5 flex justify-between items-center bg-white/50 backdrop-blur-lg backdrop-filter">
       <Link href="/" className="flex items-center gap-2">
         <CashBanknote />
         <span className="font-bold text-xl">LP Token Farmer</span>

@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+@theme {
+  --animate-fade-in: fadeIn 0.8s ease-in;
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 50;
+    }
+    100% {
+      opacity: 100;
+    }
+  }
+
+  --breakpoint-sm: 31.25rem; /* 500px */
+  --breakpoint-md: 50rem;    /* 800px */
+  --breakpoint-lg: 64rem;    /* 1024px */
+  --breakpoint-xl: 75rem;    /* 1200px */
+  --breakpoint-2xl: 87.5rem; /* 1400px */
+}
+
 html,
 body {
   padding: 0;
