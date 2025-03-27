@@ -1,9 +1,8 @@
 import { Address, erc20Abi } from 'viem'
-import { useConfig, useReadContract, useWriteContract } from 'wagmi'
+import { useReadContract, useWriteContract } from 'wagmi'
 import { MAX_UINT256 } from '../constants'
 import { useMemo } from 'react'
-import { waitForTransactionReceipt, WriteContractErrorType } from '@wagmi/core'
-import { TransactionActionStatus } from '../types'
+import { WriteContractErrorType } from '@wagmi/core'
 
 export const useTokenApproval = ({
     tokenAddress,

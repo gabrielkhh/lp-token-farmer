@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction, useCallback } from 'react'
-import { Check, Loader2, X } from 'tabler-icons-react'
+import { Loader2, X } from 'tabler-icons-react'
 import { Address } from 'viem'
 import { useGetTokenInfoWithBalance } from '../hooks/token'
 import { useAccount, useConfig, useWriteContract } from 'wagmi'
@@ -9,7 +9,6 @@ import { waitForTransactionReceipt, WriteContractErrorType } from "@wagmi/core";
 import { NumericFormat } from 'react-number-format';
 import toast from 'react-hot-toast'
 import { useTokenApproval } from '../hooks/tokenSpending'
-import { TransactionActionStatus } from '../types'
 import Link from 'next/link'
 import { useGetUserPositions } from '../hooks/pool'
 
