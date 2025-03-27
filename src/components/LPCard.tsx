@@ -10,7 +10,7 @@ import { formatTokenAmountAsString } from '../utils';
 import WithdrawModal from './WithdrawModal';
 import toast from 'react-hot-toast';
 import { waitForTransactionReceipt } from '@wagmi/core';
-import { Loader2 } from 'tabler-icons-react';
+import { Loader2, Wallet } from 'tabler-icons-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 const LPCard = ({
@@ -84,37 +84,51 @@ const LPCard = ({
     }
 
     return (
-        <div className="flex flex-col gap-2 bg-gray-100 rounded-xl w-full p-3">
+        <div className="flex flex-col gap-3 shadow-xl bg-background-lighter rounded-2xl w-full p-5">
             <DepositModal isOpen={isDepositModalOpen} onClose={setIsDepositModalOpen} depositTokenAddress={tokenAddress} />
             <WithdrawModal isOpen={isWithdrawModalOpen} onClose={setIsWithdrawModalOpen} withdrawTokenAddress={tokenAddress} />
             <div className="flex flex-col gap-0">
-                <span className="font-semibold text-xl">{tokenAInfo.tokenInfo.symbol}-{tokenBInfo.tokenInfo.symbol} LP</span>
-                <span className="text-sm font-medium text-gray-500">{formatTokenAmountAsString(poolInfo?.accPursePerShare ?? BigInt(0), purseTokenInfo.decimals)} {purseTokenInfo.symbol} per {lpTokenInfo.tokenInfo.symbol}</span>
+                <div className="flex items-center gap-3">
+                    <span className="font-bold text-2xl">{tokenAInfo.tokenInfo.symbol}-{tokenBInfo.tokenInfo.symbol} LP Farm</span>
+                    <div className="px-2 py-1 bg-amber-600/70 rounded-lg font-bold text-xs">{poolInfo?.bonusMultiplier}x Multiplier</div>
+                </div>
+                <span className="text-sm font-medium text-gray-400">{formatTokenAmountAsString(poolInfo?.accPursePerShare ?? BigInt(0), purseTokenInfo.decimals)} {purseTokenInfo.symbol} per {lpTokenInfo.tokenInfo.symbol}</span>
             </div>
 
-            <div>
-                Staked: {formatTokenAmountAsString(userInfo?.amount ?? BigInt(0), lpTokenInfo.tokenInfo.decimals) ?? "0"} {lpTokenInfo.tokenInfo.symbol}
-            </div>
-            <div>
-                Pending Rewards: <span key={userPendingRewards as bigint} className="bg-test transition-opacity duration-300 animate-fade-in">{pendingReward}</span> {purseTokenInfo.symbol}
+            <div className="flex flex-col font-medium">
+                <span className="flex items-center gap-1 font-semibold"><Wallet size={20} />Available Balance</span>
+                <span className="text-orange-400">{lpTokenInfo.tokenBalance.formattedBalance ?? "0"} {lpTokenInfo.tokenInfo.symbol}</span>
             </div>
 
+            <div className="flex flex-col md:flex-row gap-2">
+                <div className="flex w-full md:w-1/2 flex-col text-center bg-white/5 rounded-lg p-3 gap-2">
+                    <h2 className="font-semibold text-lg">Your Stake</h2>
+                    <span className="font-bold text-2xl text-orange-400 my-3">{formatTokenAmountAsString(userInfo?.amount ?? BigInt(0), lpTokenInfo.tokenInfo.decimals) ?? "0"} {lpTokenInfo.tokenInfo.symbol}</span>
+                    <div className="flex flex-col md:flex-row gap-2">
+                        <button className="md:flex-1 bg-gradient-to-r from-[#f9655b] to-[#ee821a] p-3 rounded-lg text-white font-medium cursor-pointer" onClick={() => setIsDepositModalOpen(true)}>Stake LP Tokens</button>
+                        <button className="md:flex-1 bg-red-500/40 p-3 rounded-lg text-red-300 font-medium cursor-pointer" onClick={() => setIsWithdrawModalOpen(true)}>Withdraw Stake</button>
+                    </div>
+                </div>
+                <div className="flex w-full md:w-1/2 flex-col text-center bg-white/5 rounded-lg p-3 gap-2">
+                    <h2 className="font-semibold text-lg">Pending Rewards</h2>
+                    <div className="font-bold text-2xl text-orange-400 my-3">
+                        <span key={userPendingRewards as bigint} className="transition-opacity duration-300 animate-fade-in">{pendingReward}</span>
+                        <span>{' '}{purseTokenInfo.symbol}</span>
+                    </div>
+                    <div>
 
-            <div className="flex flex-col text-sm font-medium">
-                <span className="font-semibold">Available Balance:</span>
-                <span className="text-gray-600">{lpTokenInfo.tokenBalance.formattedBalance ?? "0"} {lpTokenInfo.tokenInfo.symbol}</span>
+                        {!!(userPendingRewards as bigint) && (<button className="bg-orange-400/20 text-orange-300/80 p-3 rounded-lg cursor-pointer w-full" onClick={() => handleClaimRewards()}>
+                            {isClaimingPending ? <Loader2 className="w-full animate-spin" size={20} /> : (
+                                <span className="w-full text-center">
+                                    Claim Rewards
+                                </span>
+                            )}
+                        </button>)}
+                    </div>
+                </div>
             </div>
 
             <div className="flex gap-2">
-                <button className="bg-purple-400 p-3 rounded-xl text-white hover:bg-purple-500 cursor-pointer" onClick={() => setIsDepositModalOpen(true)}>Deposit LP Tokens</button>
-                <button className="bg-red-400 p-3 rounded-xl text-white hover:bg-red-500 cursor-pointer" onClick={() => setIsWithdrawModalOpen(true)}>Withdraw Stake</button>
-                {!!(userPendingRewards as bigint) && (<button className="bg-orange-300 p-3 w-36 rounded-xl text-white hover:bg-orange-400 cursor-pointer" onClick={() => handleClaimRewards()}>
-                    {isClaimingPending ? <Loader2 className="w-full animate-spin" size={20} /> : (
-                        <span className="w-full text-center">
-                            Claim Rewards
-                        </span>
-                    )}
-                </button>)}
             </div>
         </div>
     )

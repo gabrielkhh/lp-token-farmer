@@ -154,3 +154,10 @@ export const useGetUserPositions = (lpTokenAddress: Address, userAddress: Addres
         return undefined
     }
 }
+
+export const useGetName = () => {
+    return useReadContract({
+        ...pundixFarmContractConfig,
+        functionName: 'name',
+    })
+}

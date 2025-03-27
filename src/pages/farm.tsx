@@ -1,31 +1,38 @@
 import React from 'react'
-import { useGetPoolInfo, useGetPoolToken, useGetPoolTokens, useGetUserPositions } from '../hooks/pool';
-import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { useGetName, useGetPoolTokens } from '../hooks/pool';
+import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Address } from 'viem';
 import LPCard from '../components/LPCard';
+import Link from 'next/link';
+import { ExternalLink } from 'tabler-icons-react';
+import { LP_FARM_CONTRACT } from '../constants';
+import { getExplorerLinkAddress } from '../utils';
 
 const Farm = () => {
-    const { isConnected, address: userWalletAddress } = useAccount();
+    const { isConnected } = useAccount();
     const lpTokens = useGetPoolTokens();
+    const { data: farmName, isLoading } = useGetName();
 
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-center mb-8">
                 <div className="flex items-center">
-                    {/* <div className="relative mr-2">
-                        <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center z-10 relative">
-                            <img src="/api/placeholder/40/40" alt="Token A" className="w-10 h-10 rounded-full" />
+                    {isLoading ? (
+                        <div className="w-56 h-8 rounded-lg bg-background-lighter animate-pulse"></div>
+                    ) : (
+                        <div className="flex gap-2 items-center">
+                            <h1 className="text-3xl font-bold">{farmName as unknown as string}</h1>
+                            <Link target='_blank' className='cursor-pointer' href={getExplorerLinkAddress(LP_FARM_CONTRACT)}>
+                                <ExternalLink className="text-amber-500" />
+                            </Link>
                         </div>
-                        <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center absolute -right-3 top-0">
-                            <img src="/api/placeholder/40/40" alt="Token B" className="w-10 h-10 rounded-full" />
-                        </div>
-                    </div> */}
-                    <h1 className="text-3xl font-bold ml-6">TOKEN A / TOKEN B</h1>
+                    )}
+
                 </div>
             </div>
 
-            {/* User Positions */}
+            {/* Farms and Positions */}
             {!isConnected ? (
                 <ConnectButton />
             ) : (

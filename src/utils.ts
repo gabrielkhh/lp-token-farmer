@@ -137,3 +137,11 @@ export const calculateBigIntPercentage = (rawBalance: bigint, percentage: number
 
     return `${resultIntegerPart}.${resultDecimalPart}`;
 }
+
+export const getExplorerLinkAddress = (address: string): string => {
+    return `https://bscscan.com/address/${address}`;
+}
+
+export const getExplorerLinkTransaction = (txHash: string): string => {
+    return `https://bscscan.com/tx/${txHash}`;
+}
