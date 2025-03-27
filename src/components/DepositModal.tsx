@@ -5,36 +5,13 @@ import { useGetTokenInfoWithBalance } from '../hooks/token'
 import { useAccount, useConfig, useWriteContract } from 'wagmi'
 import { calculateBigIntPercentage, decimalToBigInt } from '../utils'
 import { LP_FARM_CONTRACT, pundixFarmContractConfig } from '../constants'
-import { waitForTransactionReceipt } from "@wagmi/core";
+import { waitForTransactionReceipt, WriteContractErrorType } from "@wagmi/core";
 import { NumericFormat } from 'react-number-format';
 import toast from 'react-hot-toast'
 import { useTokenApproval } from '../hooks/tokenSpending'
 import { TransactionActionStatus } from '../types'
 import Link from 'next/link'
 import { useGetUserPositions } from '../hooks/pool'
-
-const StatusMessage = ({ status, message }: { status: TransactionActionStatus; message: string }) => {
-    let elColor = 'text-gray-500';
-    let elIcon = <Loader2 className="animate-spin" size={12} />
-
-    switch (status) {
-        case "success":
-            elColor = 'text-green-400';
-            elIcon = <Check size={14} />
-            break;
-        case "error":
-            elColor = 'text-red-400';
-            elIcon = <X size={14} />
-            break;
-    }
-
-    return (
-        <div className={`flex items-center gap-1 ${elColor}`}>
-            {elIcon}
-            <span>{message}</span>
-        </div>
-    )
-}
 
 const DepositModal = ({
     isOpen,
@@ -62,7 +39,63 @@ const DepositModal = ({
         amount: decimalToBigInt(depositAmountStr, lpTokenInfo.tokenInfo.decimals)
     })
 
-    const handleTransactionSubmitted = async (txHash: string) => {
+    const depositWriteContract = useCallback(() => {
+        // Initiate the process of creating the tx to deposit LP tokens
+        const amountToDepositRaw = decimalToBigInt(depositAmountStr, lpTokenInfo.tokenInfo.decimals)
+
+        writeContract({
+            ...pundixFarmContractConfig,
+            functionName: 'deposit',
+            args: [depositTokenAddress, amountToDepositRaw],
+        }, {
+            onSuccess: handleDepositTransactionSubmitted,
+            onError: (error) => {
+                setIsDepositPending(false)
+
+                if (error.message.includes("User rejected")) {
+                    toast.error("User rejected the transaction")
+                } else {
+                    console.error("Error executing transaction: ", error)
+                    toast.error("An error occurred while depositing LP tokens")
+                }
+            }
+        })
+    }, [depositAmountStr, lpTokenInfo.tokenInfo.decimals])
+
+    const handleApproveTransactionSubmitted = async (txHash: string) => {
+        const transactionReceipt = await waitForTransactionReceipt(config, {
+            hash: txHash as `0x${string}`,
+        });
+
+        if (transactionReceipt.status === "success") {
+            toast(
+                <div className="flex flex-col">
+                    <span>Approve Token Spend Successful!</span>
+                    <span className="text-orange-400 underline">
+                        <Link href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</Link>
+                    </span>
+                </div>,
+                { icon: '🎉', duration: 4000 }
+            )
+
+            // Token spend approved, now we can initiate the deposit itself
+            depositWriteContract()
+        } else {
+            toast.error("An error occurred while approving LP token spending")
+        }
+    }
+
+    const handleApproveTransactionFailed = useCallback((error: WriteContractErrorType) => {
+        setIsDepositPending(false)
+        if (error.message.includes("User rejected")) {
+            toast.error("User rejected the transaction")
+        } else {
+            console.error("Error executing transaction: ", error)
+            toast.error("An error occurred while depositing LP tokens")
+        }
+    }, [setIsDepositPending])
+
+    const handleDepositTransactionSubmitted = async (txHash: string) => {
         const transactionReceipt = await waitForTransactionReceipt(config, {
             hash: txHash as `0x${string}`,
         });
@@ -98,37 +131,14 @@ const DepositModal = ({
         setIsDepositPending(true)
 
         if (needsApproval) {
-            approve()
-
-            while (status === "pending") {
-                // Wait for the approval request to be handled by the user
-            }
+            approve(handleApproveTransactionSubmitted, handleApproveTransactionFailed)
+        } else {
+            depositWriteContract()
         }
-
-        if (status === "success" || !needsApproval) {
-            const amountToDepositRaw = decimalToBigInt(depositAmountStr, lpTokenInfo.tokenInfo.decimals)
-
-            writeContract({
-                ...pundixFarmContractConfig,
-                functionName: 'deposit',
-                args: [depositTokenAddress, amountToDepositRaw],
-            }, {
-                onSuccess: handleTransactionSubmitted,
-                onError: (error) => {
-                    setIsDepositPending(false)
-
-                    if (error.message.includes("User rejected")) {
-                        toast.error("User rejected the transaction")
-                    } else {
-                        console.error("Error executing transaction: ", error)
-                        toast.error("An error occurred while depositing LP tokens")
-                    }
-                }
-            })
-        }
-    }, [depositAmountStr, needsApproval, approve, lpTokenInfo.tokenInfo.decimals])
+    }, [depositAmountStr, needsApproval, approve])
 
     const handleCloseModal = () => {
+        setDepositAmountStr('0')
         onClose(false)
     }
 

@@ -1,18 +1,22 @@
 import { Address, erc20Abi } from 'viem'
-import { useReadContract, useWriteContract } from 'wagmi'
+import { useConfig, useReadContract, useWriteContract } from 'wagmi'
 import { MAX_UINT256 } from '../constants'
 import { useMemo } from 'react'
+import { waitForTransactionReceipt, WriteContractErrorType } from '@wagmi/core'
+import { TransactionActionStatus } from '../types'
 
 export const useTokenApproval = ({
     tokenAddress,
     spenderContractAddress,
     userAddress,
     amount = MAX_UINT256,
+    isRevoke = false
 }: {
     tokenAddress: Address
     spenderContractAddress: Address
     userAddress: Address
     amount?: bigint
+    isRevoke?: boolean
 }) => {
     const { data: allowance, isLoading: loadingAllowance } = useReadContract({
         address: tokenAddress,
@@ -21,15 +25,19 @@ export const useTokenApproval = ({
         args: [userAddress, spenderContractAddress],
     })
 
-    const { writeContract, isPending, error, status } = useWriteContract()
+    const { writeContract, isPending, error, status, data: txHash } = useWriteContract()
 
-    const approve = () => {
+    const approve = (onSuccess?: (txHash: string) => any, onError?: (error: WriteContractErrorType) => any, onSettled?: () => any) => {
         writeContract({
             address: tokenAddress,
             abi: erc20Abi,
             functionName: 'approve',
             // Request for MAX_UINT256 for better UIUX else might need to keep requesting approval
-            args: [spenderContractAddress, MAX_UINT256],
+            args: [spenderContractAddress, isRevoke ? 0n : MAX_UINT256],
+        }, {
+            onSuccess: onSuccess,
+            onError: onError,
+            onSettled: onSettled,
         })
     }
 
@@ -45,6 +53,7 @@ export const useTokenApproval = ({
         allowance,
         loadingAllowance,
         error,
+        txHash,
         status
     }
 }
