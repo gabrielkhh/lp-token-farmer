@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react'
 import Navbar from './Navbar'
+import Footer from './Footer'
 
 const SharedLayout = ({ children }: { children: ReactNode }) => {
     return (
@@ -10,6 +11,7 @@ const SharedLayout = ({ children }: { children: ReactNode }) => {
             <main className="max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-screen-2xl mx-auto px-4 md:px-12 min-h-screen mt-5">
                 {children}
             </main>
+            <Footer />
         </div>
     )
 }
