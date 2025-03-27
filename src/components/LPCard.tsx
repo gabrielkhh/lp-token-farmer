@@ -10,8 +10,9 @@ import { formatTokenAmountAsString } from '../utils';
 import WithdrawModal from './WithdrawModal';
 import toast from 'react-hot-toast';
 import { waitForTransactionReceipt } from '@wagmi/core';
-import { Loader2, Wallet } from 'tabler-icons-react';
+import { Loader2, Moneybag, Wallet } from 'tabler-icons-react';
 import { useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 
 const LPCard = ({
     tokenAddress
@@ -95,9 +96,15 @@ const LPCard = ({
                 <span className="text-sm font-medium text-gray-400">{formatTokenAmountAsString(poolInfo?.accPursePerShare ?? BigInt(0), purseTokenInfo.decimals)} {purseTokenInfo.symbol} per {lpTokenInfo.tokenInfo.symbol}</span>
             </div>
 
-            <div className="flex flex-col font-medium">
-                <span className="flex items-center gap-1 font-semibold"><Wallet size={20} />Available Balance</span>
-                <span className="text-orange-400">{lpTokenInfo.tokenBalance.formattedBalance ?? "0"} {lpTokenInfo.tokenInfo.symbol}</span>
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col font-medium text-sm md:text-md">
+                    <span className="flex items-center gap-1 font-semibold"><Wallet size={20} />Available Balance</span>
+                    <span className="text-orange-400">{lpTokenInfo.tokenBalance.formattedBalance ?? "0"} {lpTokenInfo.tokenInfo.symbol}</span>
+                </div>
+                <Link className="bg-white/10 flex text-center items-center gap-1 p-3 rounded-lg font-medium" href={`https://pancakeswap.finance/v2/add/${tokenA}/${tokenB}?increase=1`} target="_blank">
+                    <Moneybag size={20} className="hidden md:block" />
+                    Supply Liquidity
+                </Link>
             </div>
 
             <div className="flex flex-col md:flex-row gap-2">
