@@ -2,8 +2,8 @@ import React, { useMemo } from 'react'
 import { pundixFarmContractConfig, PURSE_TOKEN } from '../constants'
 import { Address } from 'viem'
 import { useAccount, useBlockNumber, useConfig, useWriteContract } from 'wagmi';
-import { useGetPancakeTokenA, useGetPancakeTokenB, useGetPancakeTokenName } from '../hooks/pancakeLpToken';
-import { useGetPoolInfo, useGetPoolToken, useGetUserPendingRewards, useGetUserPositions } from '../hooks/pool';
+import { useGetPancakeTokenA, useGetPancakeTokenB } from '../hooks/pancakeLpToken';
+import { useGetPoolInfo, useGetUserPendingRewards, useGetUserPositions } from '../hooks/pool';
 import { useGetToken, useGetTokenInfoWithBalance } from '../hooks/token';
 import DepositModal from './DepositModal';
 import { formatTokenAmountAsString, getExplorerLinkAddress } from '../utils';
@@ -38,7 +38,7 @@ const LPCard = ({
         }
     }, [blockNumber, isConnected])
 
-    const { writeContract, data: hash, isPending } = useWriteContract();
+    const { writeContract } = useWriteContract();
 
     const { data: tokenA } = useGetPancakeTokenA(tokenAddress)
     const { data: tokenB } = useGetPancakeTokenB(tokenAddress)
@@ -105,7 +105,10 @@ const LPCard = ({
                             <ExternalLink className="text-orange-400" size={22} />
                         </Link>
                     </div>
-                    <div className="px-2 py-0.5 bg-cyan-400/80 rounded-md font-bold text-xs">{poolInfo?.bonusMultiplier}x Multiplier</div>
+                    <div className="flex gap-1.5 items-center">
+                        <div className="px-2 py-0.5 bg-cyan-400/80 rounded-md font-bold text-xs">{poolInfo?.bonusMultiplier}x Multiplier</div>
+                        {poolInfo?.pursePerBlock === 0n && (<div className="px-2 py-0.5 bg-red-500/80 rounded-md font-bold text-xs">No Rewards Emission</div>)}
+                    </div>
                 </div>
                 <span className="text-sm font-medium text-gray-400">{formatTokenAmountAsString(poolInfo?.accPursePerShare ?? BigInt(0), purseTokenInfo.decimals)} {purseTokenInfo.symbol} per {lpTokenInfo.tokenInfo.symbol}</span>
             </div>
