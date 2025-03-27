@@ -122,19 +122,20 @@ const DepositModal = ({
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-filter backdrop-blur-sm flex items-center justify-center z-50" onClick={() => handleCloseModal()}>
-            <div className="flex flex-col gap-3 bg-gray-50 rounded-3xl w-full max-w-md p-6 shadow-xl border border-gray-700" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-3 bg-background rounded-3xl w-full max-w-md p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-bold">Deposit LP Tokens</h2>
-                    <button className="text-gray-400 hover:bg-gray-200 rounded-full p-2 transition-colors duration-200 cursor-pointer" onClick={() => handleCloseModal()}>
+                    <button className="text-orange-400 hover:bg-orange-500/10 rounded-full p-2 transition-colors duration-200 cursor-pointer" onClick={() => handleCloseModal()}>
                         <X />
                     </button>
                 </div>
 
                 <div className="mb-6">
-                    <label className="block text-gray-400 text-sm mb-2">Amount to deposit</label>
+                    <label className="block text-gray-400 font-semibold text-sm mb-1">Amount to deposit</label>
                     <div className="relative">
-                        <div className="flex bg-gray-100 rounded-2xl p-4 border border-gray-100 focus-within:border-teal-400">
+                        <div className="flex bg-white/10 rounded-lg p-4 border border-transparent focus-within:border-orange-400">
                             <NumericFormat
+                                placeholder='69.420'
                                 value={depositAmountStr}
                                 valueIsNumericString={true}
                                 allowNegative={false}
@@ -152,20 +153,20 @@ const DepositModal = ({
                         </div>
 
                         <div className="flex justify-between items-center mt-2 px-1 gap-3">
-                            <div className="text-sm text-gray-500">
-                                Available: <span className="text-gray-800">{lpTokenInfo.tokenBalance.formattedBalance} {lpTokenInfo.tokenInfo.symbol}</span>
+                            <div className="text-sm text-gray-400">
+                                Balance: <span className="text-orange-400">{lpTokenInfo.tokenBalance.formattedBalance} {lpTokenInfo.tokenInfo.symbol}</span>
                             </div>
                             <div className="flex space-x-2 text-white">
-                                <button className="bg-orange-300 hover:bg-orange-400 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 25)}>
+                                <button className="bg-orange-400 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 25)}>
                                     25%
                                 </button>
-                                <button className="bg-orange-300 hover:bg-orange-400 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 50)}>
+                                <button className="bg-orange-400 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 50)}>
                                     50%
                                 </button>
-                                <button className="bg-orange-300 hover:bg-orange-400 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 75)}>
+                                <button className="bg-orange-400 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 75)}>
                                     75%
                                 </button>
-                                <button className="bg-orange-300 hover:bg-orange-400 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 100)}>
+                                <button className="bg-orange-400 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 100)}>
                                     Max
                                 </button>
                             </div>
@@ -174,11 +175,11 @@ const DepositModal = ({
                 </div>
 
                 <div className="flex space-x-4">
-                    <button className="w-1/2 bg-gray-200 hover:bg-gray-300 cursor-pointer text-black font-semibold py-3 px-4 rounded-xl transition" onClick={() => handleCloseModal()}>
+                    <button className="w-1/2 bg-white/10 cursor-pointer text-white font-semibold py-3 px-4 rounded-xl transition" onClick={() => handleCloseModal()}>
                         Cancel
                     </button>
                     <button
-                        className={`flex w-1/2 items-center bg-orange-300 text-white font-semibold py-3 px-4 rounded-xl transition ${depositAmountInNumber === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
+                        className={`flex w-1/2 items-center bg-gradient-to-r from-[#f9655b] to-[#ee821a] text-white font-semibold py-3 px-4 rounded-xl transition ${depositAmountInNumber === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-orange-400'}`}
                         onClick={handleDepositBtn}
                         disabled={depositAmountInNumber === 0 || isDepositPending}
                     >
@@ -189,13 +190,8 @@ const DepositModal = ({
                         )}
                     </button>
                 </div>
-
-                {/* {triggeredDepositButton && (<div className="flex flex-col mt-2 text-gray-500 font-medium text-sm">
-                    {needsApproval && (<StatusMessage status={status} message={'Approve token spend'} />)}
-                    <StatusMessage status={status} message={'Approve deposit transaction'} />
-                </div>)} */}
             </div>
-        </div >
+        </div>
     )
 }
 

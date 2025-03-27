@@ -15,7 +15,7 @@ const Farm = () => {
     const { data: farmName, isLoading } = useGetName();
 
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 pb-8">
             <div className="flex items-center mb-8">
                 <div className="flex items-center">
                     {isLoading ? (
@@ -24,7 +24,7 @@ const Farm = () => {
                         <div className="flex gap-2 items-center">
                             <h1 className="text-3xl font-bold">{farmName as unknown as string}</h1>
                             <Link target='_blank' className='cursor-pointer' href={getExplorerLinkAddress(LP_FARM_CONTRACT)}>
-                                <ExternalLink className="text-amber-500" />
+                                <ExternalLink className="text-orange-400" />
                             </Link>
                         </div>
                     )}
@@ -40,7 +40,7 @@ const Farm = () => {
                     <LPCard key={index} tokenAddress={lpToken.address as Address} />
                 ))
             )}
-        </div >
+        </div>
     )
 }
 
