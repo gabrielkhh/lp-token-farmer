@@ -10,6 +10,7 @@ import { NumericFormat } from 'react-number-format';
 import toast from 'react-hot-toast'
 import { useTokenApproval } from '../hooks/tokenSpending'
 import { TransactionActionStatus } from '../types'
+import Link from 'next/link'
 
 const StatusMessage = ({ status, message }: { status: TransactionActionStatus; message: string }) => {
     let elColor = 'text-gray-500';
@@ -67,7 +68,15 @@ const DepositModal = ({
 
         if (transactionReceipt.status === "success") {
             setIsDepositPending(false)
-            toast(<span>Deposit Succcessful! <a className="text-orange-500 underline" href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
+            toast(
+                <div className="flex flex-col">
+                    <span>Deposit Successful!</span>
+                    <span className="text-orange-400 underline">
+                        <Link href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</Link>
+                    </span>
+                </div>,
+                { icon: '🎉', duration: 4000 }
+            )
         }
     };
 

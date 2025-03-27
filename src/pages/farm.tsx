@@ -1,16 +1,14 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useGetName, useGetPoolTokens } from '../hooks/pool';
-import { useAccount } from 'wagmi';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Address } from 'viem';
 import LPCard from '../components/LPCard';
 import Link from 'next/link';
 import { ExternalLink } from 'tabler-icons-react';
 import { LP_FARM_CONTRACT } from '../constants';
 import { getExplorerLinkAddress } from '../utils';
+import toast from 'react-hot-toast';
 
 const Farm = () => {
-    const { isConnected } = useAccount();
     const lpTokens = useGetPoolTokens();
     const { data: farmName, isLoading } = useGetName();
 
@@ -28,18 +26,14 @@ const Farm = () => {
                             </Link>
                         </div>
                     )}
-
                 </div>
             </div>
 
             {/* Farms and Positions */}
-            {!isConnected ? (
-                <ConnectButton />
-            ) : (
-                lpTokens.map((lpToken, index) => (
-                    <LPCard key={index} tokenAddress={lpToken.address as Address} />
-                ))
-            )}
+            {lpTokens.map((lpToken, index) => (
+                <LPCard key={index} tokenAddress={lpToken.address as Address} />
+            ))
+            }
         </div>
     )
 }

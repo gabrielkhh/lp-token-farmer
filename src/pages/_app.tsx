@@ -20,7 +20,17 @@ function MyApp({ Component, pageProps }: AppProps) {
         <RainbowKitProvider initialChain={bsc} theme={darkTheme({
           accentColor: '#DD7717'
         })}>
-          <Toaster />
+          <Toaster toastOptions={{
+            position: 'bottom-right',
+            className: 'bg-black',
+            style: {
+              padding: '12px',
+              color: 'white',
+              background: '#2F2A22',
+              boxShadow: '0px 0px 16px rgba(0, 0, 0, 0.4)',
+              borderRadius: '8px',
+            }
+          }} />
           <SharedLayout>
             <Component {...pageProps} />
           </SharedLayout>

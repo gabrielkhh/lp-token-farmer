@@ -82,7 +82,7 @@ const Home: NextPage = () => {
                   <span className="font-bold text-xl">3</span>
                 </div>
                 <h3 className="text-2xl font-bold mb-4">Harvest Rewards</h3>
-                <p className="text-white/50">Earn yield farming rewards automatically. Harvest anytime or compound your earnings for even greater returns.</p>
+                <p className="text-white/50">Earn farming rewards automatically. Watch your rewards accrue live. The more you stake, the more you earn!</p>
               </div>
             </div>
           </div>

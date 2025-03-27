@@ -7,8 +7,9 @@ import { calculateBigIntPercentage, decimalToBigInt, formatTokenAmountAsString }
 import { pundixFarmContractConfig, PURSE_TOKEN } from '../constants'
 import { waitForTransactionReceipt } from "@wagmi/core";
 import toast from 'react-hot-toast'
-import { useGetPoolInfo, useGetUserPendingRewards, useGetUserPositions } from '../hooks/pool'
+import { useGetUserPendingRewards, useGetUserPositions } from '../hooks/pool'
 import { NumericFormat } from 'react-number-format'
+import Link from 'next/link'
 
 const WithdrawModal = ({
     isOpen,
@@ -42,7 +43,15 @@ const WithdrawModal = ({
 
         if (transactionReceipt.status === "success") {
             setIsWithdrawPending(false)
-            toast(<span>Withdraw Succcessful! <a href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</a></span>, { icon: '🎉', duration: 4000 })
+            toast(
+                <div className="flex flex-col">
+                    <span>Withdraw Succcessful!</span>
+                    <span className="text-orange-400 underline">
+                        <Link href={`https://bscscan.com/tx/${txHash}`} target={"_blank"}>View Transaction</Link>
+                    </span>
+                </div>,
+                { icon: '🎉', duration: 4000 }
+            )
         }
     };
 
