@@ -150,8 +150,7 @@ const DepositModal = ({
                                 allowNegative={false}
                                 allowLeadingZeros={false}
                                 isAllowed={(values) => {
-                                    if (decimalToBigInt(values.value, lpTokenInfo.tokenInfo.decimals) > (lpTokenInfo.tokenBalance.rawBalance ?? BigInt(0))) return false
-                                    return true
+                                    return decimalToBigInt(values.value, lpTokenInfo.tokenInfo.decimals) <= (lpTokenInfo.tokenBalance.rawBalance ?? BigInt(0))
                                 }}
                                 className='bg-transparent w-full text-xl font-medium focus:outline-none'
                                 onValueChange={(values, _sourceInfo) => {

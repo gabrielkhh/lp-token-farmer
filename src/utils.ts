@@ -4,18 +4,6 @@ export const bigIntToBN = (value: bigint): BN => {
     return new BN(value.toString());
 }
 
-// export const formatTokenAmount = (amount: bigint | BN | undefined, decimals: number | undefined): number | undefined => {
-//     if (decimals === undefined || amount === undefined) return undefined;
-
-//     const amountBN = BN.isBN(amount) ? amount : bigIntToBN(amount);
-
-//     // For zero amount, return 0
-//     if (amountBN.isZero()) return 0;
-
-//     // May have precision loss if decimals is too large
-//     return amountBN.mul(new BN(10).pow(new BN(decimals).neg())).toNumber();
-// }
-
 export const formatTokenAmountAsString = (value: bigint, decimals: number = 0): string => {
     // Handle negative values
     const isNegative = value < BigInt(0);
@@ -51,7 +39,7 @@ export const formatTokenAmountAsString = (value: bigint, decimals: number = 0): 
 
 export const decimalToBigInt = (decimalStr: string, decimals: number = 0): bigint => {
     // Validate input
-    if (!decimalStr || typeof decimalStr !== 'string') {
+    if (!decimalStr || typeof decimalStr !== 'string' || decimalStr === '.') {
         return BigInt(0);
     }
 
