@@ -11,6 +11,7 @@ import toast from 'react-hot-toast'
 import { useTokenApproval } from '../hooks/tokenSpending'
 import { TransactionActionStatus } from '../types'
 import Link from 'next/link'
+import { useGetUserPositions } from '../hooks/pool'
 
 const StatusMessage = ({ status, message }: { status: TransactionActionStatus; message: string }) => {
     let elColor = 'text-gray-500';
@@ -48,9 +49,9 @@ const DepositModal = ({
     const [depositAmountStr, setDepositAmountStr] = React.useState<string>('0');
     const [isDepositPending, setIsDepositPending] = React.useState<boolean>(false);
     const [depositAmountInNumber, setDepositAmountInNumber] = React.useState<number>(0);
-    const [triggeredDepositButton, setTriggeredDepositButton] = React.useState<boolean>(false);
     const { address: userWalletAddress } = useAccount();
     const { writeContract, data: hash, isPending } = useWriteContract();
+    const { refetch: refetchStakedTokens } = useGetUserPositions(depositTokenAddress, userWalletAddress);
 
     const lpTokenInfo = useGetTokenInfoWithBalance(depositTokenAddress, userWalletAddress)
 
@@ -66,8 +67,9 @@ const DepositModal = ({
             hash: txHash as `0x${string}`,
         });
 
+        setIsDepositPending(false)
+
         if (transactionReceipt.status === "success") {
-            setIsDepositPending(false)
             toast(
                 <div className="flex flex-col">
                     <span>Deposit Successful!</span>
@@ -77,7 +79,12 @@ const DepositModal = ({
                 </div>,
                 { icon: '🎉', duration: 4000 }
             )
+        } else {
+            toast.error("An error occurred while depositing LP tokens")
         }
+
+        lpTokenInfo.tokenBalance.refetch();
+        refetchStakedTokens();
     };
 
     const handlePercentageFill = useCallback((e: React.MouseEvent<HTMLButtonElement>, percentage: number) => {
@@ -89,7 +96,6 @@ const DepositModal = ({
     const handleDepositBtn = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
         setIsDepositPending(true)
-        setTriggeredDepositButton(true)
 
         if (needsApproval) {
             approve()
@@ -123,7 +129,6 @@ const DepositModal = ({
     }, [depositAmountStr, needsApproval, approve, lpTokenInfo.tokenInfo.decimals])
 
     const handleCloseModal = () => {
-        setTriggeredDepositButton(false)
         onClose(false)
     }
 

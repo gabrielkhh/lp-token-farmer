@@ -29,6 +29,7 @@ const WithdrawModal = ({
     const lpTokenInfo = useGetTokenInfoWithBalance(withdrawTokenAddress, userWalletAddress)
     const userInfo = useGetUserPositions(withdrawTokenAddress, userWalletAddress);
     const purseTokenInfo = useGetToken(PURSE_TOKEN)
+    const { refetch: refetchStakedTokens } = useGetUserPositions(withdrawTokenAddress, userWalletAddress);
 
     const { data: userPendingRewards } = useGetUserPendingRewards(withdrawTokenAddress, userWalletAddress)
 
@@ -41,8 +42,9 @@ const WithdrawModal = ({
             hash: txHash as `0x${string}`,
         });
 
+        setIsWithdrawPending(false)
+
         if (transactionReceipt.status === "success") {
-            setIsWithdrawPending(false)
             toast(
                 <div className="flex flex-col">
                     <span>Withdraw Succcessful!</span>
@@ -52,7 +54,13 @@ const WithdrawModal = ({
                 </div>,
                 { icon: '🎉', duration: 4000 }
             )
+        } else {
+            toast.error("An error occurred while withdrawing LP tokens")
         }
+
+        // Refresh both user LP token balance and staked tokens amount
+        lpTokenInfo.tokenBalance.refetch();
+        refetchStakedTokens();
     };
 
     const handlePercentageFill = useCallback((e: React.MouseEvent<HTMLButtonElement>, percentage: number) => {

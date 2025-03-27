@@ -138,20 +138,17 @@ export const useGetUserPendingRewards = (lpTokenAddress: Address, userAddress: A
 }
 
 export const useGetUserPositions = (lpTokenAddress: Address, userAddress: Address | undefined) => {
-    const { data: userInfo } = useReadContract({
+    const userInfoResult = useReadContract({
         ...pundixFarmContractConfig,
         functionName: 'userInfo',
         args: [lpTokenAddress, userAddress],
         query: { enabled: !!userAddress },
     })
 
-    if (Array.isArray(userInfo)) {
-        return {
-            amount: userInfo[0],
-            rewardDebt: userInfo[1],
-        }
-    } else {
-        return undefined
+    return {
+        ...userInfoResult,
+        amount: Array.isArray(userInfoResult.data) ? userInfoResult.data[0] : undefined,
+        rewardDebt: Array.isArray(userInfoResult.data) ? userInfoResult.data[1] : undefined,
     }
 }
 
