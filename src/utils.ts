@@ -4,7 +4,7 @@ export const bigIntToBN = (value: bigint): BN => {
     return new BN(value.toString());
 }
 
-export const formatTokenAmountAsString = (value: bigint, decimals: number = 0): string => {
+export const formatTokenAmountAsString = (value: bigint, decimals: number = 0, removeTrailingZeros: boolean = true): string => {
     // Handle negative values
     const isNegative = value < BigInt(0);
 
@@ -31,7 +31,14 @@ export const formatTokenAmountAsString = (value: bigint, decimals: number = 0): 
     const result = valueStr.slice(0, insertPosition) + '.' + valueStr.slice(insertPosition);
 
     // Remove trailing zeros after decimal point, but keep at least one digit after decimal
-    const cleanedResult = result.replace(/\.?0+$/, match => match.startsWith('.') ? '' : match);
+    let cleanedResult = result.replace(/\.?0+$/, match => match.startsWith('.') ? '' : match);
+
+    if (removeTrailingZeros) {
+        // Remove trailing zeros after decimal point
+        cleanedResult = result.replace(/(\.\d*[1-9])0+$/, '$1');
+        // If there are only zeros after decimal, remove decimal point too
+        cleanedResult = cleanedResult.replace(/\.0+$/, '');
+    }
 
     // Apply negative sign if needed
     return isNegative ? '-' + cleanedResult : cleanedResult;
