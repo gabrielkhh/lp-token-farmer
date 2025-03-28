@@ -19,3 +19,5 @@ pnpm build && pnpm start
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+> This web app is powered by NextJS and React.
