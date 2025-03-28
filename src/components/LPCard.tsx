@@ -137,7 +137,7 @@ const LPCard = ({
                     <div className="flex flex-col md:flex-row gap-2">
                         <div className="flex w-full md:w-1/2 flex-col text-center bg-white/5 rounded-lg p-3 gap-2">
                             <h2 className="font-semibold text-lg">Your Stake</h2>
-                            <span className="font-bold text-2xl text-orange-400 my-3">{formatTokenAmountAsString(userInfo?.amount ?? BigInt(0), lpTokenInfo.tokenInfo.decimals) ?? "0"} {lpTokenInfo.tokenInfo.symbol}</span>
+                            <span className="font-bold md:text-2xl text-xl text-orange-400 my-3">{formatTokenAmountAsString(userInfo?.amount ?? BigInt(0), lpTokenInfo.tokenInfo.decimals) ?? "0"} {lpTokenInfo.tokenInfo.symbol}</span>
                             <div className="flex flex-col md:flex-row gap-2">
                                 <button className="md:flex-1 bg-gradient-to-r from-[#f9655b] to-[#ee821a] p-3 rounded-lg text-white font-medium cursor-pointer" onClick={() => setIsDepositModalOpen(true)}>Stake LP Tokens</button>
                                 <button className="md:flex-1 bg-red-500/40 p-3 rounded-lg text-red-300 font-medium cursor-pointer" onClick={() => setIsWithdrawModalOpen(true)}>Withdraw Stake</button>
@@ -145,7 +145,7 @@ const LPCard = ({
                         </div>
                         <div className="flex w-full md:w-1/2 flex-col text-center bg-white/5 rounded-lg p-3 gap-2">
                             <h2 className="font-semibold text-lg">Pending Rewards</h2>
-                            <div className="font-bold text-2xl text-orange-400 my-3">
+                            <div className="font-bold md:text-2xl text-xl text-orange-400 my-3">
                                 <span key={userPendingRewards as bigint} className="transition-opacity duration-300 animate-fade-in">{pendingReward}</span>
                                 <span>{' '}{purseTokenInfo.symbol}</span>
                             </div>

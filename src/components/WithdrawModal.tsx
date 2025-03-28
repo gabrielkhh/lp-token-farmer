@@ -72,7 +72,6 @@ const WithdrawModal = ({
     const handleWithdrawBtn = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
         setIsWithdrawPending(true)
-        // setTriggeredDepositButton(true)
 
         const amountToWithdrawRaw = decimalToBigInt(withdrawAmountStr, lpTokenInfo.tokenInfo.decimals)
 
@@ -156,7 +155,7 @@ const WithdrawModal = ({
 
                 <div className="bg-orange-300/5 rounded-lg p-3 flex flex-col gap-1 items-center">
                     <span className="font-semibold text-lg">Pending Rewards</span>
-                    <div className="font-bold text-2xl text-orange-400 flex flex-col items-center">
+                    <div className="font-bold text-xl md:text-2xl text-orange-400 flex flex-col items-center">
                         <span key={userPendingRewards as bigint} className="transition-opacity duration-300 animate-fade-in">{pendingReward}</span>
                         <span>{purseTokenInfo.symbol}</span>
                     </div>
