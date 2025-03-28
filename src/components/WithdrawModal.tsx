@@ -132,21 +132,21 @@ const WithdrawModal = ({
                             />
                         </div>
 
-                        <div className="flex justify-between items-center mt-2 px-1 gap-3">
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-center mt-2 px-1 gap-3">
                             <div className="text-sm text-gray-400">
                                 Staked: <span className="text-orange-400">{formatTokenAmountAsString(userInfo?.amount, lpTokenInfo.tokenInfo.decimals)} {lpTokenInfo.tokenInfo.symbol}</span>
                             </div>
                             <div className="flex space-x-2 text-white">
-                                <button className="bg-orange-400 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 25)}>
+                                <button className="bg-orange-400 flex-1 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 25)}>
                                     25%
                                 </button>
-                                <button className="bg-orange-400 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 50)}>
+                                <button className="bg-orange-400 flex-1 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 50)}>
                                     50%
                                 </button>
-                                <button className="bg-orange-400 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 75)}>
+                                <button className="bg-orange-400 flex-1 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 75)}>
                                     75%
                                 </button>
-                                <button className="bg-orange-400 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 100)}>
+                                <button className="bg-orange-400 flex-1 hover:bg-orange-500 text-sm px-2 py-1 rounded-lg transition cursor-pointer" onClick={(e) => handlePercentageFill(e, 100)}>
                                     Max
                                 </button>
                             </div>

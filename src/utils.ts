@@ -107,14 +107,6 @@ export const decimalToBigInt = (decimalStr: string, decimals: number = 0): bigin
 };
 
 export const calculateBigIntPercentage = (rawBalance: bigint, percentage: number, decimals: number = 0): string => {
-    // // Remove decimal point
-    // const parts = formattedBalance.split('.');
-    // const integerPart = parts[0];
-    // const decimalPart = parts.length > 1 ? parts[1] : '';
-
-    // // Convert to BigInt
-    // const valueAsBigInt = BigInt(integerPart + decimalPart);
-
     // Calculate percentage
     const result = (rawBalance * BigInt(percentage)) / BigInt(100);
 
