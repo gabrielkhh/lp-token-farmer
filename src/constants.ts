@@ -11,3 +11,18 @@ export const pundixFarmContractConfig = {
     address: LP_FARM_CONTRACT,
     abi: pundixLpFarmAbi,
 } as const
+
+export const TOKENS_INFO: Record<Address, any> = {
+    "0x55d398326f99059fF775485246999027B3197955": {
+        name: "USDT",
+        imageUrl: "https://tokens.pancakeswap.finance/images/symbol/usdt.png"
+    },
+    "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56": {
+        name: "BUSD",
+        imageUrl: "https://tokens.pancakeswap.finance/images/symbol/busd.png"
+    },
+    "0x29a63F4B209C29B4DC47f06FFA896F32667DAD2C": {
+        name: "PURSE",
+        imageUrl: "https://bscscan.com/token/images/pundixpurse_32.png"
+    }
+}

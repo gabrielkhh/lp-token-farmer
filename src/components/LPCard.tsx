@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { pundixFarmContractConfig, PURSE_TOKEN } from '../constants'
+import { pundixFarmContractConfig, PURSE_TOKEN, TOKENS_INFO } from '../constants'
 import { Address } from 'viem'
 import { useAccount, useBlockNumber, useConfig, useWriteContract } from 'wagmi';
 import { useGetPancakeTokenA, useGetPancakeTokenB } from '../hooks/pancakeLpToken';
@@ -98,9 +98,17 @@ const LPCard = ({
             <DepositModal isOpen={isDepositModalOpen} onClose={setIsDepositModalOpen} depositTokenAddress={tokenAddress} />
             <WithdrawModal isOpen={isWithdrawModalOpen} onClose={setIsWithdrawModalOpen} withdrawTokenAddress={tokenAddress} />
             <div className="flex flex-col gap-2">
-                <div className="flex flex-col md:flex-row items-start md:items-center md:gap-2">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-1.5 md:gap-2">
                     <div className="flex items-center gap-2">
-                        <span className="font-bold text-2xl">{tokenAInfo.tokenInfo.symbol}-{tokenBInfo.tokenInfo.symbol} LP Farm</span>
+                        <div className="relative mr-8">
+                            <div className="w-8 h-8 md:h-10 md:w-10 rounded-full bg-yellow-500 flex items-center justify-center z-10 relative">
+                                <img src={TOKENS_INFO[tokenA as Address]?.imageUrl} alt="Token A" className="w-8 h-8 md:h-10 md:w-10 rounded-full" />
+                            </div>
+                            <div className="w-8 h-8 md:h-10 md:w-10 rounded-full bg-yellow-500 flex items-center justify-center absolute -right-6 md:-right-8 top-0">
+                                <img src={TOKENS_INFO[tokenB as Address]?.imageUrl} alt="Token B" className="w-8 h-8 md:h-10 md:w-10 rounded-full" />
+                            </div>
+                        </div>
+                        <span className="font-bold md:text-2xl text-xl">{tokenAInfo.tokenInfo.symbol}-{tokenBInfo.tokenInfo.symbol} LP Farm</span>
                         <Link target='_blank' className='cursor-pointer' href={getExplorerLinkAddress(tokenAddress)}>
                             <ExternalLink className="text-orange-400" size={22} />
                         </Link>
